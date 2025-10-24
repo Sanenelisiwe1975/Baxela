@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useConnect } from 'wagmi';
 import type { Connector } from 'wagmi';
-// BasePay component not found – commented out to fix build
-// import BasePay from '@/components/BasePay';
+import BasePay from '@/components/BasePay';
 import toast from 'react-hot-toast';
 
 interface AnalyticsData {
@@ -230,15 +229,12 @@ export default function AnalyticsPage() {
                     </svg>
                     <h3 className="text-xl font-bold mb-2">Premium Content Locked</h3>
                     <p className="text-gray-300 mb-6">Unlock detailed analytics and insights for just $5 USDC</p>
-                    {/* BasePay component not found – commented out to fix build */}
-                    {/* <BasePay
-                      amount="5"
-                      currency="USDC"
-                      description="Unlock premium analytics for 30 days"
+                    <BasePay
+                      amount="0.01"
                       onSuccess={handlePaymentSuccess}
                       onError={handlePaymentError}
                       disabled={paymentLoading}
-                    /> */}
+                    />
                   </div>
                 </div>
                 

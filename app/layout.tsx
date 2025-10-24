@@ -7,6 +7,7 @@ import { base, baseSepolia } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { injected, coinbaseWallet } from 'wagmi/connectors';
+import Navigation from '@/components/Navigation';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -39,6 +40,7 @@ export default function RootLayout({
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={wagmiConfig}>
             <div className="min-h-screen bg-gray-50">
+              <Navigation />
               {children}
             </div>
             <Toaster position="top-right" />

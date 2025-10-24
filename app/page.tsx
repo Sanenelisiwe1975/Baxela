@@ -109,10 +109,16 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-4">
           <Link 
+            href="/voting" 
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            🗳️ Vote Now
+          </Link>
+          <Link 
             href="/analytics" 
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Analytics Dashboard
+            📊 Analytics
           </Link>
           <WalletConnection />
         </div>
