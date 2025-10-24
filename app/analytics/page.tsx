@@ -193,6 +193,37 @@ export default function AnalyticsPage() {
                 <WalletConnectSection />
               </div>
             </div>
+
+            {/* Payment Section */}
+            <div className="max-w-md mx-auto mt-12">
+              <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-blue-200">
+                <div className="text-center">
+                  <div className="bg-blue-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <svg className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Unlock Premium Analytics</h3>
+                  <p className="text-gray-600 mb-6">
+                    Get instant access to detailed analytics and insights for just $5 USDC
+                  </p>
+                  <div className="space-y-4">
+                    <BasePay
+                      amount="0.01"
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                      disabled={paymentLoading}
+                    />
+                    {paymentLoading && (
+                      <div className="flex items-center justify-center space-x-2 text-blue-600">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span className="text-sm">Processing payment...</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -229,12 +260,6 @@ export default function AnalyticsPage() {
                     </svg>
                     <h3 className="text-xl font-bold mb-2">Premium Content Locked</h3>
                     <p className="text-gray-300 mb-6">Unlock detailed analytics and insights for just $5 USDC</p>
-                    <BasePay
-                      amount="0.01"
-                      onSuccess={handlePaymentSuccess}
-                      onError={handlePaymentError}
-                      disabled={paymentLoading}
-                    />
                   </div>
                 </div>
                 

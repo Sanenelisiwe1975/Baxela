@@ -486,6 +486,22 @@ export default function IncidentMapPage() {
                         {selectedIncident.assignedTo && (
                           <p><span className="font-medium">Assigned To:</span> {selectedIncident.assignedTo}</p>
                         )}
+                        {(selectedIncident as any).ipfsHash && (
+                          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                            <p className="text-sm font-medium text-blue-900 mb-1">📡 IPFS Storage</p>
+                            <p className="text-xs text-blue-700 break-all">
+                              Hash: {(selectedIncident as any).ipfsHash}
+                            </p>
+                            <a 
+                              href={`https://gateway.pinata.cloud/ipfs/${(selectedIncident as any).ipfsHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:text-blue-800 underline"
+                            >
+                              View on IPFS Gateway
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -527,6 +543,11 @@ export default function IncidentMapPage() {
                               {incident.verified && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-green-600 bg-green-100">
                                   ✓
+                                </span>
+                              )}
+                              {(incident as any).ipfsHash && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-blue-600 bg-blue-100" title={`IPFS Hash: ${(incident as any).ipfsHash}`}>
+                                  📡 IPFS
                                 </span>
                               )}
                             </div>

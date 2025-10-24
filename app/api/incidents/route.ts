@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ipfsService } from '../../../lib/ipfs';
 
 interface IncidentReport {
   id: string;
@@ -19,6 +20,7 @@ interface IncidentReport {
   verificationNotes?: string;
   assignedTo?: string;
   lastUpdated: Date;
+  ipfsHash?: string; // IPFS hash for decentralized storage
 }
 
 interface CreateIncidentData {
@@ -363,16 +365,46 @@ export async function POST(request: NextRequest) {
       lastUpdated: new Date()
     };
 
+    // Upload incident data to IPFS
+    let ipfsHash: string | undefined;
+    try {
+      const ipfsData = {
+        id: newIncident.id,
+        title: newIncident.title,
+        category: newIncident.category,
+        location: newIncident.location,
+        coordinates: newIncident.coordinates,
+        description: newIncident.description,
+        reportedBy: newIncident.reportedBy,
+        timestamp: newIncident.timestamp.toISOString(),
+        severity: newIncident.severity,
+        attachments: newIncident.attachments
+      };
+
+      ipfsHash = await ipfsService.uploadIncidentData(ipfsData);
+      newIncident.ipfsHash = ipfsHash;
+      
+      console.log(`Incident uploaded to IPFS: ${ipfsHash}`);
+    } catch (ipfsError) {
+      console.error('IPFS upload failed:', ipfsError);
+      // Continue without IPFS hash - incident will still be stored locally
+      console.log('Continuing without IPFS storage due to upload failure');
+    }
+
     // Add to mock incidents
     mockIncidents.push(newIncident);
 
     // Log incident creation
     console.log(`New incident reported: ${newIncident.title} (${newIncident.id}) by ${newIncident.reportedBy} at ${new Date().toISOString()}`);
+    if (ipfsHash) {
+      console.log(`IPFS Hash: ${ipfsHash}`);
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Incident reported successfully',
-      incident: newIncident
+      incident: newIncident,
+      ipfsHash: ipfsHash || null
     }, { status: 201 });
 
   } catch (error) {

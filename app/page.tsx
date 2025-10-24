@@ -72,7 +72,7 @@ export default function Home() {
     category: 'voting_irregularity' as IncidentReport['category']
   });
 
-  const handleSubmitReport = (e: React.FormEvent) => {
+  const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isConnected) {
@@ -80,23 +80,54 @@ export default function Home() {
       return;
     }
 
-    const newReport: IncidentReport = {
-      id: Date.now().toString(),
-      ...formData,
-      timestamp: new Date(),
-      reporter: address || '',
-      status: 'pending'
-    };
+    try {
+      const response = await fetch('/api/incidents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          location: formData.location,
+          category: formData.category === 'voting_irregularity' ? 'irregularities' : formData.category,
+          reportedBy: address,
+          severity: 'medium' // Default severity
+        }),
+      });
 
-    setReports([newReport, ...reports]);
-    setFormData({
-      title: '',
-      description: '',
-      location: '',
-      category: 'voting_irregularity'
-    });
-    setShowReportForm(false);
-    toast.success('Incident report submitted successfully!');
+      const data = await response.json();
+
+      if (data.success) {
+        const newReport: IncidentReport = {
+          id: data.incident.id,
+          ...formData,
+          timestamp: new Date(data.incident.timestamp),
+          reporter: address || '',
+          status: 'pending'
+        };
+
+        setReports([newReport, ...reports]);
+        setFormData({
+          title: '',
+          description: '',
+          location: '',
+          category: 'voting_irregularity'
+        });
+        setShowReportForm(false);
+        
+        if (data.ipfsHash) {
+          toast.success(`Incident reported successfully and uploaded to IPFS! Hash: ${data.ipfsHash.substring(0, 10)}...`);
+        } else {
+          toast.success('Incident reported successfully!');
+        }
+      } else {
+        toast.error(data.message || 'Failed to submit incident report');
+      }
+    } catch (error) {
+      console.error('Error submitting incident:', error);
+      toast.error('Failed to submit incident report');
+    }
   };
 
   return (
