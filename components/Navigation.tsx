@@ -3,10 +3,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAccount } from 'wagmi';
+import { useEffect, useState } from 'react';
 
 export default function Navigation() {
   const pathname = usePathname();
   const { isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted on client side to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
       { href: '/', label: 'Home', icon: '🏠' },
@@ -57,13 +64,19 @@ export default function Navigation() {
 
           {/* Connection Status */}
           <div className="flex items-center space-x-4">
-            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-              isConnected 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-gray-100 text-gray-600'
-            }`}>
-              {isConnected ? '🟢 Connected' : '🔴 Not Connected'}
-            </div>
+            {mounted ? (
+              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                isConnected 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
+                {isConnected ? '🟢 Connected' : '🔴 Not Connected'}
+              </div>
+            ) : (
+              <div className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                🔄 Loading...
+              </div>
+            )}
           </div>
         </div>
 

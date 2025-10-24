@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseEther } from 'viem';
-import { base } from 'wagmi/chains';
+import { useBaseAccount, simulateTransaction, validatePaymentAmount } from '@/lib/baseAccount';
 
 interface BasePayProps {
   amount: string;
@@ -13,20 +11,6 @@ interface BasePayProps {
   className?: string;
 }
 
-// Simple payment contract ABI for ETH transfers
-const PAYMENT_ABI = [
-  {
-    inputs: [],
-    name: 'pay',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-] as const;
-
-// Demo payment contract address (you would replace with actual contract)
-const PAYMENT_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000';
-
 export default function BasePay({ 
   amount, 
   onSuccess, 
@@ -34,45 +18,26 @@ export default function BasePay({
   disabled = false,
   className = ""
 }: BasePayProps) {
-  const { isConnected, address } = useAccount();
+  const { address, isConnected } = useBaseAccount();
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  const { writeContract, data: hash, error } = useWriteContract();
-  
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  // Handle successful transaction
-  if (isConfirmed && hash && !isProcessing) {
-    setIsProcessing(true);
-    onSuccess(hash);
-  }
-
-  // Handle transaction error
-  if (error && !isProcessing) {
-    setIsProcessing(true);
-    onError(error);
-  }
 
   const handlePayment = async () => {
-    if (!isConnected || !address) {
-      onError(new Error('Please connect your wallet first'));
+    if (!validatePaymentAmount(amount)) {
+      onError(new Error('Invalid payment amount'));
       return;
     }
 
     try {
       setIsProcessing(true);
       
-      // For demo purposes, we'll simulate a payment
-      // In a real implementation, you would call your payment contract
-      await writeContract({
-        address: PAYMENT_CONTRACT_ADDRESS,
-        abi: PAYMENT_ABI,
-        functionName: 'pay',
-        value: parseEther(amount),
-        chainId: base.id,
-      });
+      // Simulate payment processing on Base network
+      const transactionHash = await simulateTransaction(amount);
+      
+      // Simulate successful payment
+      setTimeout(() => {
+        setIsProcessing(false);
+        onSuccess(transactionHash);
+      }, 1000);
       
     } catch (err) {
       setIsProcessing(false);
@@ -80,7 +45,7 @@ export default function BasePay({
     }
   };
 
-  const isLoading = isProcessing || isConfirming;
+  const isLoading = isProcessing;
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -96,7 +61,7 @@ export default function BasePay({
 
       <button
         onClick={handlePayment}
-        disabled={disabled || isLoading || !isConnected}
+        disabled={disabled || isLoading}
         className={`
           w-full py-3 px-4 rounded-lg font-medium transition-all duration-200
           ${isLoading 
@@ -110,20 +75,12 @@ export default function BasePay({
         {isLoading ? (
           <div className="flex items-center justify-center space-x-2">
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            <span>
-              {isConfirming ? 'Confirming Payment...' : 'Processing Payment...'}
-            </span>
+            <span>Processing Payment...</span>
           </div>
         ) : (
           `Pay ${amount} ETH on Base`
         )}
       </button>
-
-      {!isConnected && (
-        <p className="text-sm text-red-600 text-center">
-          Please connect your wallet to make a payment
-        </p>
-      )}
 
       <div className="text-xs text-gray-500 text-center">
         <p>Secure payment powered by Base blockchain</p>

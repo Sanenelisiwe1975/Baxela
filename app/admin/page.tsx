@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useBaseAccount } from '@/lib/baseAccount';
 import { toast } from 'react-hot-toast';
 
 interface Election {
@@ -43,9 +43,9 @@ const ADMIN_ADDRESSES = [
   '0x2345678901234567890123456789012345678901'
 ];
 
-// Wallet Connection Component
-function WalletConnectSection() {
-  const { address, isConnected } = useAccount();
+// Base Account Connection Component
+function BaseAccountSection() {
+  const { address, isConnected } = useBaseAccount();
 
   if (!isConnected) {
     return (
@@ -94,7 +94,7 @@ function WalletConnectSection() {
 }
 
 export default function AdminDashboard() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useBaseAccount();
   const [elections, setElections] = useState<Election[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -281,7 +281,7 @@ export default function AdminDashboard() {
       {/* Admin Access Status */}
       {showAdminPrompt ? (
         <div className="mb-6">
-          <WalletConnectSection />
+          <BaseAccountSection />
           {!isConnected && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
               <p className="text-blue-800 text-sm">
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
           )}
         </div>
       ) : (
-        <WalletConnectSection />
+        <BaseAccountSection />
       )}
 
       {/* Stats Overview */}

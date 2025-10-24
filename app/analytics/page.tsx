@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useAccount, useConnect } from 'wagmi';
-import type { Connector } from 'wagmi';
+import React, { useState, useEffect } from 'react';
+import { useBaseAccount } from '@/lib/baseAccount';
 import BasePay from '@/components/BasePay';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
+import Link from 'next/link';
 
 interface AnalyticsData {
   overview: {
@@ -47,33 +47,24 @@ interface PremiumAccess {
   daysRemaining?: number;
 }
 
-function WalletConnectSection() {
-  const { connectors, connect, error, status } = useConnect();
-  const isPending = status === 'pending';
-  
-  const coinbaseConnector = connectors.find((connector: Connector) => connector.name === 'Coinbase Wallet');
+function BaseAccountSection() {
+  const { address, isConnected } = useBaseAccount();
   
   return (
     <div className="space-y-2">
-      {coinbaseConnector && (
-        <button
-          onClick={() => connect({ connector: coinbaseConnector })}
-          disabled={isPending}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          Connect Base Account
-          {isPending ? ' (connecting...)' : ''}
-        </button>
-      )}
-      {error && (
-        <p className="text-sm text-red-600">{error?.message ?? String(error)}</p>
-      )}
+      <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+        <span className="text-sm text-green-700">Base Account Connected</span>
+        <span className="text-xs text-green-600 ml-auto">
+          {address?.slice(0, 6)}...{address?.slice(-4)}
+        </span>
+      </div>
     </div>
   );
 }
 
 export default function AnalyticsPage() {
-  const { isConnected, address } = useAccount();
+  const { isConnected, address } = useBaseAccount();
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [premiumAccess, setPremiumAccess] = useState<PremiumAccess | null>(null);
   const [loading, setLoading] = useState(false);
@@ -190,7 +181,7 @@ export default function AnalyticsPage() {
                 <p className="text-sm text-gray-600 mb-6">
                   Connect your Base Account to access premium analytics and insights.
                 </p>
-                <WalletConnectSection />
+                <BaseAccountSection />
               </div>
             </div>
 

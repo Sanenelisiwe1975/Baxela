@@ -6,21 +6,14 @@ import { WagmiProvider, createConfig, http } from 'wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import { injected, coinbaseWallet } from 'wagmi/connectors';
 import Navigation from '@/components/Navigation';
 
 const inter = Inter({ subsets: ['latin'] });
 
-// Configure wagmi with Base chains and connectors
+// Configure wagmi with Base chains only (no wallet connectors needed)
 const wagmiConfig = createConfig({
   chains: [base, baseSepolia],
-  connectors: [
-    injected(),
-    coinbaseWallet({
-      appName: 'Baxela Democracy Platform',
-      preference: 'smartWalletOnly', // Use Base Account (smart wallet)
-    }),
-  ],
+  connectors: [], // No connectors - using default base account
   transports: {
     [base.id]: http(),
     [baseSepolia.id]: http(),

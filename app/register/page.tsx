@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
+import { useBaseAccount } from '@/lib/baseAccount';
+import { toast } from 'react-hot-toast';
+import Link from 'next/link';
 
 interface VoterRegistration {
   id: string;
@@ -43,53 +44,30 @@ interface RegistrationFormData {
   country: string;
 }
 
-// Wallet connection component
-function WalletConnectSection() {
-  const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
-  const { disconnect } = useDisconnect();
-
-  if (isConnected && address) {
-    return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-green-800 font-medium">Wallet Connected</h3>
-            <p className="text-green-600 text-sm">
-              {address.slice(0, 6)}...{address.slice(-4)}
-            </p>
-          </div>
-          <button
-            onClick={() => disconnect()}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-          >
-            Disconnect
-          </button>
-        </div>
-      </div>
-    );
-  }
+// Base Account connection component
+function BaseAccountSection() {
+  const { address, isConnected } = useBaseAccount();
 
   return (
-    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-      <div className="text-center">
-        <h3 className="text-yellow-800 font-medium mb-2">Connect Your Wallet</h3>
-        <p className="text-yellow-600 text-sm mb-4">
-          You need to connect your wallet to register as a voter
-        </p>
-        <button
-          onClick={() => connect({ connector: injected() })}
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Connect Wallet
-        </button>
+    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-green-800 font-medium">Base Account Connected</h3>
+          <p className="text-green-600 text-sm">
+            {address?.slice(0, 6)}...{address?.slice(-4)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-green-700 text-sm">Active</span>
+        </div>
       </div>
     </div>
   );
 }
 
 export default function VoterRegistrationPage() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useBaseAccount();
   const [registration, setRegistration] = useState<VoterRegistration | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -260,7 +238,7 @@ export default function VoterRegistrationPage() {
           </h1>
 
           {/* Wallet Connection Status */}
-          {isConnected && <WalletConnectSection />}
+          {isConnected && <BaseAccountSection />}
 
           {/* Always show registration form and status */}
             <>
@@ -510,7 +488,7 @@ export default function VoterRegistrationPage() {
                           <p className="text-yellow-700 text-sm mb-3">
                             You need to connect your wallet to submit your voter registration.
                           </p>
-                          <WalletConnectSection />
+                          <BaseAccountSection />
                         </div>
                       </div>
                     ) : (

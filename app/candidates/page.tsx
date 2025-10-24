@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useBaseAccount } from '@/lib/baseAccount';
 import { toast } from 'react-hot-toast';
 
 interface Candidate {
@@ -29,9 +29,9 @@ interface CandidateFormData {
   electionId: string;
 }
 
-// Wallet Connection Component
-function WalletConnectSection() {
-  const { address, isConnected } = useAccount();
+// Base Account Connection Component
+function BaseAccountSection() {
+  const { address, isConnected } = useBaseAccount();
 
   if (!isConnected) {
     return (
@@ -50,7 +50,7 @@ function WalletConnectSection() {
     <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-green-800">Wallet Connected</h3>
+          <h3 className="text-lg font-semibold text-green-800">Base Account Connected</h3>
           <p className="text-green-700 text-sm">
             {address?.slice(0, 6)}...{address?.slice(-4)}
           </p>
@@ -62,7 +62,7 @@ function WalletConnectSection() {
 }
 
 export default function CandidatesPage() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useBaseAccount();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [userCandidate, setUserCandidate] = useState<Candidate | null>(null);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
@@ -207,8 +207,8 @@ export default function CandidatesPage() {
         <p className="text-gray-600">Register as a candidate or manage your profile</p>
       </div>
 
-      {/* Wallet Connection Status */}
-      {isConnected && <WalletConnectSection />}
+      {/* Base Account Connection Status */}
+      {isConnected && <BaseAccountSection />}
 
       {/* User's Candidate Profile */}
       {isConnected && userCandidate && (
@@ -250,7 +250,7 @@ export default function CandidatesPage() {
             <p className="text-yellow-700 mb-4">
               Connect your Base Account to register as a candidate and manage your profile.
             </p>
-            <WalletConnectSection />
+            <BaseAccountSection />
           </div>
         ) : !userCandidate ? (
           <button

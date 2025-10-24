@@ -92,10 +92,11 @@ function isAuthorized(candidate: Candidate, walletAddress: string): boolean {
 // GET /api/candidates/[id] - Get specific candidate
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const candidate = findCandidateById(params.id);
+    const { id } = await params;
+    const candidate = findCandidateById(id);
     
     if (!candidate) {
       return NextResponse.json(
@@ -121,14 +122,15 @@ export async function GET(
 // PUT /api/candidates/[id] - Update candidate profile
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { walletAddress, ...updateData } = body;
     
     // Find candidate
-    const candidateIndex = mockCandidates.findIndex(c => c.id === params.id);
+    const candidateIndex = mockCandidates.findIndex(c => c.id === id);
     if (candidateIndex === -1) {
       return NextResponse.json(
         { success: false, message: 'Candidate not found' },
@@ -187,14 +189,15 @@ export async function PUT(
 // DELETE /api/candidates/[id] - Delete candidate registration
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { walletAddress } = body;
     
     // Find candidate
-    const candidateIndex = mockCandidates.findIndex(c => c.id === params.id);
+    const candidateIndex = mockCandidates.findIndex(c => c.id === id);
     if (candidateIndex === -1) {
       return NextResponse.json(
         { success: false, message: 'Candidate not found' },

@@ -47,7 +47,8 @@ let mockIncidents: IncidentReport[] = [
     severity: 'high',
     verified: true,
     assignedTo: 'admin-001',
-    lastUpdated: new Date('2024-11-05T11:00:00')
+    lastUpdated: new Date('2024-11-05T11:00:00'),
+    ipfsHash: 'QmTestHash1234567890abcdefghijklmnopqrstuvwxyz123'
   },
   {
     id: 'incident-002',
@@ -63,7 +64,8 @@ let mockIncidents: IncidentReport[] = [
     verified: true,
     verificationNotes: 'Verified by local authorities. Security increased.',
     assignedTo: 'admin-002',
-    lastUpdated: new Date('2024-11-05T15:30:00')
+    lastUpdated: new Date('2024-11-05T15:30:00'),
+    ipfsHash: 'QmTestHash5678901234abcdefghijklmnopqrstuvwxyz567'
   },
   {
     id: 'incident-003',
@@ -256,8 +258,64 @@ export async function GET(request: NextRequest) {
     const verified = url.searchParams.get('verified');
     const limit = parseInt(url.searchParams.get('limit') || '50');
     const offset = parseInt(url.searchParams.get('offset') || '0');
+    const includeIpfs = url.searchParams.get('includeIpfs') !== 'false'; // Default to true
 
     let filteredIncidents = [...mockIncidents];
+
+    // Enhance incidents with IPFS data if available and requested
+    if (includeIpfs) {
+      const enhancedIncidents = await Promise.allSettled(
+        filteredIncidents.map(async (incident) => {
+          if (incident.ipfsHash) {
+            try {
+              // Fetch data from IPFS
+              const ipfsData = await ipfsService.getIncidentData(incident.ipfsHash);
+              
+              // Merge IPFS data with local data, prioritizing IPFS for core incident data
+              return {
+                ...incident,
+                title: ipfsData.title || incident.title,
+                description: ipfsData.description || incident.description,
+                location: ipfsData.location || incident.location,
+                coordinates: ipfsData.coordinates || incident.coordinates,
+                category: ipfsData.category || incident.category,
+                severity: ipfsData.severity || incident.severity,
+                attachments: ipfsData.attachments || incident.attachments,
+                // Keep local metadata (status, verification, etc.)
+                ipfsData: ipfsData, // Include full IPFS data for reference
+                dataSource: 'ipfs_enhanced'
+              };
+            } catch (ipfsError) {
+              console.warn(`Failed to fetch IPFS data for incident ${incident.id}:`, ipfsError);
+              // Return original incident with error flag
+              return {
+                ...incident,
+                dataSource: 'local_only',
+                ipfsError: 'Failed to fetch from IPFS'
+              };
+            }
+          }
+          return {
+            ...incident,
+            dataSource: 'local_only'
+          };
+        })
+      );
+
+      // Process results and handle any failures
+      filteredIncidents = enhancedIncidents.map((result, index) => {
+        if (result.status === 'fulfilled') {
+          return result.value;
+        } else {
+          console.warn(`Failed to process incident ${filteredIncidents[index].id}:`, result.reason);
+          return {
+            ...filteredIncidents[index],
+            dataSource: 'local_only',
+            processingError: 'Failed to enhance with IPFS data'
+          };
+        }
+      });
+    }
 
     // Apply filters
     if (category && category !== 'all') {
@@ -301,7 +359,10 @@ export async function GET(request: NextRequest) {
       medium: filteredIncidents.filter(i => i.severity === 'medium').length,
       low: filteredIncidents.filter(i => i.severity === 'low').length,
       verified: filteredIncidents.filter(i => i.verified).length,
-      unverified: filteredIncidents.filter(i => !i.verified).length
+      unverified: filteredIncidents.filter(i => !i.verified).length,
+      // Add IPFS-specific stats
+      ipfsStored: filteredIncidents.filter(i => i.ipfsHash).length,
+      ipfsEnhanced: filteredIncidents.filter(i => (i as any).dataSource === 'ipfs_enhanced').length
     };
 
     return NextResponse.json({
@@ -313,6 +374,11 @@ export async function GET(request: NextRequest) {
         limit,
         offset,
         hasMore: offset + limit < filteredIncidents.length
+      },
+      ipfsInfo: {
+        enabled: includeIpfs,
+        totalWithIpfs: filteredIncidents.filter(i => i.ipfsHash).length,
+        successfullyEnhanced: filteredIncidents.filter(i => (i as any).dataSource === 'ipfs_enhanced').length
       }
     });
 
@@ -328,7 +394,39 @@ export async function GET(request: NextRequest) {
 // POST /api/incidents - Create new incident report
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as CreateIncidentData;
+    // Check if request contains FormData (file uploads) or JSON
+    const contentType = request.headers.get('content-type') || '';
+    let body: CreateIncidentData;
+    let files: { videos: File[]; images: File[]; documents: File[] } = { videos: [], images: [], documents: [] };
+
+    if (contentType.includes('multipart/form-data')) {
+      // Handle FormData with files
+      const formData = await request.formData();
+      
+      // Extract text fields
+      body = {
+        title: formData.get('title') as string,
+        description: formData.get('description') as string,
+        location: formData.get('location') as string,
+        category: formData.get('category') as CreateIncidentData['category'],
+        reportedBy: formData.get('reportedBy') as string,
+        severity: formData.get('severity') as CreateIncidentData['severity']
+      };
+
+      // Extract files
+      for (const [key, value] of formData.entries()) {
+        if (key.startsWith('video_') && value instanceof File) {
+          files.videos.push(value);
+        } else if (key.startsWith('image_') && value instanceof File) {
+          files.images.push(value);
+        } else if (key.startsWith('document_') && value instanceof File) {
+          files.documents.push(value);
+        }
+      }
+    } else {
+      // Handle JSON data (backward compatibility)
+      body = await request.json() as CreateIncidentData;
+    }
 
     // Validate incident data
     const validation = validateIncidentData(body);
@@ -355,7 +453,7 @@ export async function POST(request: NextRequest) {
       title: body.title.trim(),
       category: body.category,
       location: body.location.trim(),
-      coordinates,
+      coordinates: coordinates || undefined,
       description: body.description.trim(),
       reportedBy: body.reportedBy.toLowerCase(),
       timestamp: new Date(),
@@ -364,6 +462,55 @@ export async function POST(request: NextRequest) {
       verified: false,
       lastUpdated: new Date()
     };
+
+    // Upload files to IPFS first
+    const attachmentHashes: string[] = [];
+    const totalFiles = files.videos.length + files.images.length + files.documents.length;
+    
+    if (totalFiles > 0) {
+      try {
+        console.log(`Uploading ${totalFiles} files to IPFS...`);
+        
+        // Upload videos
+        for (const video of files.videos) {
+          try {
+            const hash = await ipfsService.uploadFile(video);
+            attachmentHashes.push(hash);
+            console.log(`Video uploaded to IPFS: ${hash} (${video.name})`);
+          } catch (error) {
+            console.error(`Failed to upload video ${video.name}:`, error);
+          }
+        }
+        
+        // Upload images
+        for (const image of files.images) {
+          try {
+            const hash = await ipfsService.uploadFile(image);
+            attachmentHashes.push(hash);
+            console.log(`Image uploaded to IPFS: ${hash} (${image.name})`);
+          } catch (error) {
+            console.error(`Failed to upload image ${image.name}:`, error);
+          }
+        }
+        
+        // Upload documents
+        for (const document of files.documents) {
+          try {
+            const hash = await ipfsService.uploadFile(document);
+            attachmentHashes.push(hash);
+            console.log(`Document uploaded to IPFS: ${hash} (${document.name})`);
+          } catch (error) {
+            console.error(`Failed to upload document ${document.name}:`, error);
+          }
+        }
+        
+        // Add attachment hashes to incident
+        newIncident.attachments = attachmentHashes;
+        
+      } catch (error) {
+        console.error('Error uploading files to IPFS:', error);
+      }
+    }
 
     // Upload incident data to IPFS
     let ipfsHash: string | undefined;
@@ -404,7 +551,12 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Incident reported successfully',
       incident: newIncident,
-      ipfsHash: ipfsHash || null
+      ipfsHash: ipfsHash || null,
+      attachments: {
+        total: attachmentHashes.length,
+        hashes: attachmentHashes,
+        uploaded: totalFiles > 0 ? `${attachmentHashes.length}/${totalFiles} files uploaded successfully` : 'No files uploaded'
+      }
     }, { status: 201 });
 
   } catch (error) {
