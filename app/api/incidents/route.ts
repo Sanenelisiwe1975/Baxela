@@ -414,7 +414,7 @@ export async function POST(request: NextRequest) {
       };
 
       // Extract files
-      for (const [key, value] of formData.entries()) {
+      formData.forEach((value, key) => {
         if (key.startsWith('video_') && value instanceof File) {
           files.videos.push(value);
         } else if (key.startsWith('image_') && value instanceof File) {
@@ -422,7 +422,7 @@ export async function POST(request: NextRequest) {
         } else if (key.startsWith('document_') && value instanceof File) {
           files.documents.push(value);
         }
-      }
+      });
     } else {
       // Handle JSON data (backward compatibility)
       body = await request.json() as CreateIncidentData;
