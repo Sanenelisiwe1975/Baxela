@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ipfsService } from '../../../lib/ipfs';
 
+export const maxDuration = 60; // allow up to 60s for large uploads
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file
+
 function determineSeverity(category: string, description: string): string {
   const lower = description.toLowerCase();
   if (['violence', 'threat', 'weapon', 'assault', 'emergency'].some(k => lower.includes(k))) return 'critical';
@@ -127,9 +131,13 @@ export async function POST(request: NextRequest) {
     const severity = body.severity || determineSeverity(body.category, body.description);
     const coords = geocodeLocation(body.location);
 
-    // Upload files to IPFS
+    // Upload files to IPFS (skip files over 50MB)
     const attachmentHashes: string[] = [];
     for (const file of [...files.videos, ...files.images, ...files.documents]) {
+      if (file.size > MAX_FILE_SIZE) {
+        console.warn(`Skipping ${file.name}: file size ${(file.size / 1024 / 1024).toFixed(1)}MB exceeds 50MB limit`);
+        continue;
+      }
       try {
         const hash = await ipfsService.uploadFile(file);
         attachmentHashes.push(hash);

@@ -66,7 +66,12 @@ export default function Home() {
     const fileArray = Array.from(files);
     const validFiles: File[] = [];
     
+    const MAX_SIZE = 50 * 1024 * 1024; // 50MB
     fileArray.forEach(file => {
+      if (file.size > MAX_SIZE) {
+        toast.error(`${file.name} is too large (max 50MB)`);
+        return;
+      }
       // Validate file types
       if (type === 'videos' && file.type.startsWith('video/')) {
         validFiles.push(file);
