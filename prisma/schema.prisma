@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Election {
+  id          String             @id @default(cuid())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  status      String             @default("upcoming")
+  totalVotes  Int                @default(0)
+  createdAt   DateTime           @default(now())
+  candidates  ElectionCandidate[]
+  votes       Vote[]
+}
+
+model ElectionCandidate {
+  id          String   @id @default(cuid())
+  electionId  String
+  election    Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  name        String
+  party       String
+  description String
+  image       String?
+  votes       Vote[]
+}
+
+model Vote {
+  id           String            @id @default(cuid())
+  electionId   String
+  election     Election          @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  candidateId  String
+  candidate    ElectionCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  voterAddress String
+  timestamp    DateTime          @default(now())
+  txHash       String?
+
+  @@unique([electionId, voterAddress])
+}
+
+model Incident {
+  id                String   @id @default(cuid())
+  title             String
+  category          String
+  location          String
+  latitude          Float?
+  longitude         Float?
+  description       String
+  reportedBy        String
+  status            String   @default("pending")
+  severity          String   @default("medium")
+  verified          Boolean  @default(false)
+  verificationNotes String?
+  assignedTo        String?
+  ipfsHash          String?
+  attachments       String[]
+  timestamp         DateTime @default(now())
+  lastUpdated       DateTime @updatedAt
+}
+
+model Candidate {
+  id               String   @id @default(cuid())
+  name             String
+  party            String
+  position         String
+  bio              String
+  experience       String
+  platform         String
+  walletAddress    String   @unique
+  profileImage     String?
+  verified         Boolean  @default(false)
+  electionId       String
+  registrationDate DateTime @default(now())
+}
+
+model VoterRegistration {
+  id                 String   @id @default(cuid())
+  walletAddress      String   @unique
+  firstName          String
+  lastName           String
+  dateOfBirth        String
+  nationalId         String   @unique
+  email              String   @unique
+  phoneNumber        String
+  street             String
+  city               String
+  state              String
+  zipCode            String
+  country            String
+  verificationStatus String   @default("pending")
+  eligibleElections  String[]
+  verificationNotes  String?
+  registrationDate   DateTime @default(now())
+  lastUpdated        DateTime @updatedAt
+}
+
+model PremiumAccess {
+  id            String   @id @default(cuid())
+  address       String   @unique
+  transactionId String
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+}
