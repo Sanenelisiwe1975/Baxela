@@ -25,10 +25,12 @@ function end(message: string): NextResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const sessionId = (formData.get('sessionId') as string) || '';
-    const phoneNumber = (formData.get('phoneNumber') as string) || '';
-    const text = (formData.get('text') as string) || '';
+    // Africa's Talking sends application/x-www-form-urlencoded
+    const body = await request.text();
+    const params = new URLSearchParams(body);
+    const sessionId = params.get('sessionId') || '';
+    const phoneNumber = params.get('phoneNumber') || '';
+    const text = params.get('text') || '';
 
     const parts = text === '' ? [] : text.split('*');
 
