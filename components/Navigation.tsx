@@ -2,18 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAccount } from 'wagmi';
-import { useEffect, useState } from 'react';
+import { useBaseAccount, formatCitizenId } from '@/lib/baseAccount';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { isConnected } = useAccount();
-  const [mounted, setMounted] = useState(false);
-
-  // Ensure component is mounted on client side to prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { address, mounted } = useBaseAccount();
 
   const navItems = [
       { href: '/', label: 'Home', icon: '🏠' },
@@ -62,19 +55,15 @@ export default function Navigation() {
             </div>
           </div>
 
-          {/* Connection Status */}
+          {/* Citizen Identity */}
           <div className="flex items-center space-x-4">
             {mounted ? (
-              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                isConnected 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-gray-100 text-gray-600'
-              }`}>
-                {isConnected ? '🟢 Connected' : '🔴 Not Connected'}
+              <div className="px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                🏛️ Citizen {formatCitizenId(address)}
               </div>
             ) : (
-              <div className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                🔄 Loading...
+              <div className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
+                Loading...
               </div>
             )}
           </div>

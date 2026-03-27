@@ -1,37 +1,64 @@
-// Base Account Configuration
-// This provides a default account for the application without requiring wallet connection
+// Baxela Identity System
+// Users get a unique anonymous session identity automatically — no wallet needed.
+// The blockchain layer runs in the background using the platform's server-side account.
 
-export const DEFAULT_BASE_ACCOUNT = {
+import { useState, useEffect } from 'react';
+
+export const PLATFORM_ACCOUNT = {
   address: '0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5e' as `0x${string}`,
-  isConnected: true,
   chainId: 8453, // Base mainnet
-  balance: '0', // Will be updated dynamically if needed
 };
 
 export const BASE_ACCOUNT_CONFIG = {
   name: 'Base Account',
-  description: 'Default Base blockchain account for Baxela platform',
+  description: 'Platform Base blockchain account for Baxela',
   network: 'Base',
   chainId: 8453,
   rpcUrl: 'https://mainnet.base.org',
   blockExplorer: 'https://basescan.org',
 };
 
-// Mock account functions for compatibility with existing code
+// Generate or retrieve a unique anonymous session ID per browser.
+// Stored in localStorage so it persists across page refreshes.
+function getOrCreateSessionId(): `0x${string}` {
+  if (typeof window === 'undefined') return PLATFORM_ACCOUNT.address;
+
+  const stored = localStorage.getItem('baxela_citizen_id');
+  if (stored) return stored as `0x${string}`;
+
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  const id = `0x${Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')}` as `0x${string}`;
+  localStorage.setItem('baxela_citizen_id', id);
+  return id;
+}
+
+// Main identity hook — returns a stable per-user ID with no wallet required.
 export const useBaseAccount = () => {
+  const [address, setAddress] = useState<`0x${string}`>(PLATFORM_ACCOUNT.address);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setAddress(getOrCreateSessionId());
+    setMounted(true);
+  }, []);
+
   return {
-    address: DEFAULT_BASE_ACCOUNT.address,
-    isConnected: DEFAULT_BASE_ACCOUNT.isConnected,
-    chainId: DEFAULT_BASE_ACCOUNT.chainId,
+    address,
+    isConnected: true,   // Always true — every visitor is a citizen
+    chainId: PLATFORM_ACCOUNT.chainId,
     chain: { id: 8453, name: 'Base' },
-    connector: { name: 'Base Account' },
+    connector: { name: 'Baxela Citizen' },
+    mounted,             // Use this to avoid SSR hydration mismatches
   };
 };
 
+// Short display version of the citizen ID, e.g. "0x1a2b...3c4d"
+export const formatCitizenId = (address: string): string =>
+  `${address.slice(0, 6)}...${address.slice(-4)}`;
+
 // Payment utilities
-export const formatPaymentAmount = (amount: string | number): string => {
-  return typeof amount === 'string' ? amount : amount.toString();
-};
+export const formatPaymentAmount = (amount: string | number): string =>
+  typeof amount === 'string' ? amount : amount.toString();
 
 export const validatePaymentAmount = (amount: string): boolean => {
   const num = parseFloat(amount);
@@ -39,15 +66,11 @@ export const validatePaymentAmount = (amount: string): boolean => {
 };
 
 // Transaction utilities
-export const generateTransactionId = (): string => {
-  return `base_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-};
+export const generateTransactionId = (): string =>
+  `baxela_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 export const simulateTransaction = async (amount: string): Promise<string> => {
-  // Simulate transaction processing time
   await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Generate a mock transaction hash
-  const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+  const txHash = `0x${Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join('')}`;
   return txHash;
 };
