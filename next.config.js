@@ -18,7 +18,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://api.pinata.cloud https://gateway.pinata.cloud https://*.neon.tech https://mainnet.base.org https://sepolia.base.org https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org wss: ws:",
+              "connect-src 'self' https://api.pinata.cloud https://gateway.pinata.cloud https://*.neon.tech https://mainnet.base.org https://sepolia.base.org https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://cca-lite.coinbase.com https://*.coinbase.com wss: ws:",
               "font-src 'self' data:",
               "worker-src blob:",
               "frame-src 'none'",
