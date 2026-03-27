@@ -37,8 +37,10 @@ interface AdminStats {
   pendingVerifications: number;
 }
 
-// Mock admin addresses - in a real app, this would be managed properly
+// Admin addresses — add the platform account and any operator addresses here.
+// In production, manage these via environment variables.
 const ADMIN_ADDRESSES = [
+  '0x742d35cc6634c0532925a3b8d4c9db96c4b5da5e', // platform account
   '0x1234567890123456789012345678901234567890',
   '0x2345678901234567890123456789012345678901'
 ];
@@ -46,19 +48,6 @@ const ADMIN_ADDRESSES = [
 // Base Account Connection Component
 function BaseAccountSection() {
   const { address, isConnected } = useBaseAccount();
-
-  if (!isConnected) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-semibold text-red-800 mb-2">
-          Admin Access Required
-        </h3>
-        <p className="text-red-700 mb-4">
-          You need to connect your admin wallet to access the election management dashboard.
-        </p>
-      </div>
-    );
-  }
 
   const isAdmin = ADMIN_ADDRESSES.includes(address.toLowerCase());
 
@@ -257,8 +246,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Show admin access status
-  const showAdminPrompt = !isConnected || !isAdmin;
+  const showAdminPrompt = !isAdmin;
 
   if (loading) {
     return (
@@ -282,20 +270,11 @@ export default function AdminDashboard() {
       {showAdminPrompt ? (
         <div className="mb-6">
           <BaseAccountSection />
-          {!isConnected && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-              <p className="text-blue-800 text-sm">
-                📋 You can view the dashboard, but admin actions require wallet connection.
-              </p>
-            </div>
-          )}
-          {isConnected && !isAdmin && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-4">
-              <p className="text-orange-800 text-sm">
-                🔒 You can view the dashboard, but admin actions require authorized admin access.
-              </p>
-            </div>
-          )}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-4">
+            <p className="text-orange-800 text-sm">
+              🔒 Your Citizen ID is not authorized for admin access. Admin actions are restricted.
+            </p>
+          </div>
         </div>
       ) : (
         <BaseAccountSection />
