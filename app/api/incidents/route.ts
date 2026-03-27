@@ -141,12 +141,15 @@ export async function POST(request: NextRequest) {
     // Upload incident metadata to IPFS
     let ipfsHash: string | undefined;
     try {
+      const tempId = `incident-${Date.now()}`;
       ipfsHash = await ipfsService.uploadIncidentData({
+        id: tempId,
         title: body.title.trim(),
         category: body.category,
         location: body.location.trim(),
         description: body.description.trim(),
         reportedBy: body.reportedBy.toLowerCase(),
+        timestamp: new Date().toISOString(),
         severity,
         attachments: attachmentHashes,
       });
