@@ -3,20 +3,21 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useBaseAccount, formatCitizenId } from '@/lib/baseAccount';
+import SmartWalletButton from '@/components/SmartWalletButton';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { address, mounted } = useBaseAccount();
+  const { address, mounted, isSignedIn } = useBaseAccount();
 
   const navItems = [
-      { href: '/', label: 'Home', icon: '🏠' },
-      { href: '/voting', label: 'Voting', icon: '🗳️' },
-      { href: '/candidates', label: 'Candidates', icon: '👥' },
-      { href: '/register', label: 'Register', icon: '📝' },
-      { href: '/incidents', label: 'Incidents', icon: '🚨' },
-      { href: '/analytics', label: 'Analytics', icon: '📊' },
-      { href: '/admin', label: 'Admin', icon: '⚙️' },
-    ];
+    { href: '/', label: 'Home', icon: '🏠' },
+    { href: '/voting', label: 'Voting', icon: '🗳️' },
+    { href: '/candidates', label: 'Candidates', icon: '👥' },
+    { href: '/register', label: 'Register', icon: '📝' },
+    { href: '/incidents', label: 'Incidents', icon: '🚨' },
+    { href: '/analytics', label: 'Analytics', icon: '📊' },
+    { href: '/admin', label: 'Admin', icon: '⚙️' },
+  ];
 
   return (
     <nav className="bg-white shadow-lg border-b border-gray-200">
@@ -55,14 +56,20 @@ export default function Navigation() {
             </div>
           </div>
 
-          {/* Citizen Identity */}
-          <div className="flex items-center space-x-4">
+          {/* Identity / Sign-in */}
+          <div className="flex items-center gap-3">
             {mounted ? (
-              <div className="px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                🏛️ Citizen {formatCitizenId(address)}
-              </div>
+              <>
+                {/* If not signed in, show anonymous badge + sign-in prompt */}
+                {!isSignedIn && (
+                  <span className="hidden sm:block px-2 py-1 rounded-full text-xs text-gray-400 border border-gray-200">
+                    🏛️ {formatCitizenId(address)}
+                  </span>
+                )}
+                <SmartWalletButton />
+              </>
             ) : (
-              <div className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
+              <div className="px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-400">
                 Loading...
               </div>
             )}
