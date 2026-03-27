@@ -29,12 +29,29 @@ interface Candidate {
   voteCount: number;
 }
 
+interface Incident {
+  id: string;
+  title: string;
+  category: string;
+  location: string;
+  description: string;
+  reportedBy: string;
+  status: string;
+  severity: string;
+  verified: boolean;
+  verificationNotes?: string;
+  assignedTo?: string;
+  ipfsHash?: string;
+  timestamp: string;
+}
+
 interface AdminStats {
   totalElections: number;
   activeElections: number;
   totalCandidates: number;
   totalVotes: number;
   pendingVerifications: number;
+  pendingIncidents: number;
 }
 
 // Admin addresses — add the platform account and any operator addresses here.
@@ -88,9 +105,14 @@ export default function AdminDashboard() {
   const { address, mounted } = useBaseAccount();
   const [elections, setElections] = useState<Election[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [verificationNotes, setVerificationNotes] = useState('');
+  const [assignedTo, setAssignedTo] = useState('');
+  const [incidentFilter, setIncidentFilter] = useState<'all' | 'pending' | 'investigating' | 'resolved' | 'dismissed'>('pending');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'elections' | 'candidates' | 'create'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'elections' | 'candidates' | 'create' | 'incidents'>('overview');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newElection, setNewElection] = useState({
     title: '',
@@ -112,21 +134,29 @@ export default function AdminDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Load elections
       const electionsResponse = await fetch('/api/elections');
       const electionsData = await electionsResponse.json();
-      
+
       // Load candidates
       const candidatesResponse = await fetch('/api/candidates');
       const candidatesData = await candidatesResponse.json();
-      
+
+      // Load incidents
+      const incidentsResponse = await fetch('/api/incidents?limit=100');
+      const incidentsData = await incidentsResponse.json();
+
       if (electionsData.success) {
         setElections(electionsData.elections || []);
       }
-      
+
       if (candidatesData.success) {
         setCandidates(candidatesData.candidates || []);
+      }
+
+      if (incidentsData.success) {
+        setIncidents(incidentsData.incidents || []);
       }
 
       // Calculate stats
@@ -135,13 +165,15 @@ export default function AdminDashboard() {
       const totalCandidates = candidatesData.candidates?.length || 0;
       const pendingVerifications = candidatesData.candidates?.filter((c: Candidate) => !c.verified).length || 0;
       const totalVotes = electionsData.elections?.reduce((sum: number, e: Election) => sum + e.totalVotes, 0) || 0;
+      const pendingIncidents = incidentsData.incidents?.filter((i: Incident) => i.status === 'pending').length || 0;
 
       setStats({
         totalElections,
         activeElections,
         totalCandidates,
         totalVotes,
-        pendingVerifications
+        pendingVerifications,
+        pendingIncidents
       });
 
     } catch (error) {
@@ -154,7 +186,7 @@ export default function AdminDashboard() {
 
   const handleCreateElection = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isAdmin) {
       toast.error('Unauthorized');
       return;
@@ -248,6 +280,54 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleUpdateIncident = async (
+    incidentId: string,
+    updates: { status?: string; verified?: boolean; verificationNotes?: string; assignedTo?: string }
+  ) => {
+    try {
+      const response = await fetch('/api/incidents', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ incidentId, ...updates }),
+      });
+      if (response.ok) {
+        toast.success('Incident updated successfully!');
+        setSelectedIncident(null);
+        setVerificationNotes('');
+        setAssignedTo('');
+        loadDashboardData();
+      } else {
+        toast.error('Failed to update incident');
+      }
+    } catch (error) {
+      toast.error('Failed to update incident');
+    }
+  };
+
+  const getSeverityBadgeClass = (severity: string) => {
+    switch (severity?.toLowerCase()) {
+      case 'critical': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-gray-100 text-gray-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'investigating': return 'bg-blue-100 text-blue-800';
+      case 'resolved': return 'bg-green-100 text-green-800';
+      case 'dismissed': return 'bg-gray-100 text-gray-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const filteredIncidents = incidentFilter === 'all'
+    ? incidents
+    : incidents.filter(i => i.status === incidentFilter);
+
   const showAdminPrompt = !isAdmin;
 
   if (loading) {
@@ -284,7 +364,7 @@ export default function AdminDashboard() {
 
       {/* Stats Overview */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-blue-600">{stats.totalElections}</div>
             <div className="text-gray-600">Total Elections</div>
@@ -305,6 +385,10 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold text-red-600">{stats.pendingVerifications}</div>
             <div className="text-gray-600">Pending Verifications</div>
           </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-2xl font-bold text-rose-600">{stats.pendingIncidents}</div>
+            <div className="text-gray-600">Pending Incidents</div>
+          </div>
         </div>
       )}
 
@@ -316,11 +400,12 @@ export default function AdminDashboard() {
               { id: 'overview', label: 'Overview', icon: '📊' },
               { id: 'elections', label: 'Elections', icon: '🗳️' },
               { id: 'candidates', label: 'Candidates', icon: '👥' },
-              { id: 'create', label: 'Create Election', icon: '➕' }
+              { id: 'create', label: 'Create Election', icon: '➕' },
+              { id: 'incidents', label: 'Incidents', icon: '🚨' }
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`py-4 px-2 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
@@ -339,7 +424,7 @@ export default function AdminDashboard() {
           {activeTab === 'overview' && (
             <div>
               <h2 className="text-2xl font-bold mb-6">System Overview</h2>
-              
+
               {/* Recent Activity */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Recent Elections</h3>
@@ -372,7 +457,7 @@ export default function AdminDashboard() {
           {activeTab === 'elections' && (
             <div>
               <h2 className="text-2xl font-bold mb-6">Manage Elections</h2>
-              
+
               <div className="space-y-4">
                 {elections.map((election) => (
                   <div key={election.id} className="border border-gray-200 rounded-lg p-6">
@@ -395,7 +480,7 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="flex space-x-2">
                       {election.status === 'draft' && (
                         <button
@@ -430,7 +515,7 @@ export default function AdminDashboard() {
           {activeTab === 'candidates' && (
             <div>
               <h2 className="text-2xl font-bold mb-6">Manage Candidates</h2>
-              
+
               <div className="space-y-4">
                 {candidates.map((candidate) => (
                   <div key={candidate.id} className="border border-gray-200 rounded-lg p-6">
@@ -465,7 +550,7 @@ export default function AdminDashboard() {
           {activeTab === 'create' && (
             <div>
               <h2 className="text-2xl font-bold mb-6">Create New Election</h2>
-              
+
               <form onSubmit={handleCreateElection} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -480,7 +565,7 @@ export default function AdminDashboard() {
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Election Type *
@@ -524,7 +609,7 @@ export default function AdminDashboard() {
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       End Date *
@@ -588,6 +673,203 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* Incidents Tab */}
+          {activeTab === 'incidents' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Incident Reports</h2>
+                <p className="text-gray-500 text-sm">
+                  {incidents.length} incidents &mdash; {incidents.filter(i => i.status === 'pending').length} pending review
+                </p>
+              </div>
+
+              {/* Filter Bar */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {(['all', 'pending', 'investigating', 'resolved', 'dismissed'] as const).map((filter) => {
+                  const count = filter === 'all'
+                    ? incidents.length
+                    : incidents.filter(i => i.status === filter).length;
+                  const label = filter.charAt(0).toUpperCase() + filter.slice(1);
+                  return (
+                    <button
+                      key={filter}
+                      onClick={() => setIncidentFilter(filter)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        incidentFilter === filter
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Incident Cards */}
+              <div className="space-y-4">
+                {filteredIncidents.length === 0 && (
+                  <div className="border border-gray-200 rounded-lg p-8 text-center text-gray-500">
+                    No incidents match the selected filter.
+                  </div>
+                )}
+
+                {filteredIncidents.map((incident) => (
+                  <div key={incident.id} className="border border-gray-200 rounded-lg p-6">
+                    {/* Card Header */}
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0 mr-4">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{incident.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getSeverityBadgeClass(incident.severity)}`}>
+                            {incident.severity}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(incident.status)}`}>
+                            {incident.status}
+                          </span>
+                          {incident.verified && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              ✅ Verified
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-500 space-x-3">
+                          <span>Category: <span className="text-gray-700">{incident.category}</span></span>
+                          <span>Location: <span className="text-gray-700">{incident.location}</span></span>
+                          <span>
+                            Reported by:{' '}
+                            <span className="text-gray-700 font-mono">
+                              {incident.reportedBy
+                                ? `${incident.reportedBy.slice(0, 6)}...${incident.reportedBy.slice(-4)}`
+                                : 'Unknown'}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {new Date(incident.timestamp).toLocaleString()}
+                        </div>
+                        {incident.ipfsHash && (
+                          <div className="mt-1">
+                            <a
+                              href={`https://gateway.pinata.cloud/ipfs/${incident.ipfsHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline font-mono"
+                            >
+                              IPFS: {incident.ipfsHash.slice(0, 20)}...
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {!incident.verified && incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button
+                          onClick={() => handleUpdateIncident(incident.id, { verified: true, status: 'investigating' })}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                        >
+                          Verify
+                        </button>
+                      )}
+                      {incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button
+                          onClick={() => handleUpdateIncident(incident.id, { status: 'resolved' })}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                        >
+                          Resolve
+                        </button>
+                      )}
+                      {incident.status !== 'dismissed' && (
+                        <button
+                          onClick={() => handleUpdateIncident(incident.id, { status: 'dismissed' })}
+                          className="bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500"
+                        >
+                          Dismiss
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (selectedIncident?.id === incident.id) {
+                            setSelectedIncident(null);
+                            setVerificationNotes('');
+                            setAssignedTo('');
+                          } else {
+                            setSelectedIncident(incident);
+                            setVerificationNotes(incident.verificationNotes || '');
+                            setAssignedTo(incident.assignedTo || '');
+                          }
+                        }}
+                        className="border border-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-50"
+                      >
+                        {selectedIncident?.id === incident.id ? 'Close' : 'Details'}
+                      </button>
+                    </div>
+
+                    {/* Detail Panel */}
+                    {selectedIncident?.id === incident.id && (
+                      <div className="mt-4 border-t border-gray-100 pt-4 space-y-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">Full Description</h4>
+                          <p className="text-gray-600 text-sm whitespace-pre-wrap">{incident.description}</p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Verification Notes
+                          </label>
+                          <input
+                            type="text"
+                            value={verificationNotes}
+                            onChange={(e) => setVerificationNotes(e.target.value)}
+                            placeholder="Add verification notes..."
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Assign to Officer
+                          </label>
+                          <input
+                            type="text"
+                            value={assignedTo}
+                            onChange={(e) => setAssignedTo(e.target.value)}
+                            placeholder="Officer name or ID..."
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleUpdateIncident(incident.id, {
+                              verificationNotes,
+                              assignedTo
+                            })}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                          >
+                            Save Notes
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedIncident(null);
+                              setVerificationNotes('');
+                              setAssignedTo('');
+                            }}
+                            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
