@@ -126,10 +126,13 @@ export default function AdminDashboard() {
   const isAdmin = mounted && ADMIN_ADDRESSES.includes(address.toLowerCase());
 
   useEffect(() => {
+    if (!mounted) return;
     if (isAdmin) {
       loadDashboardData();
+    } else {
+      setLoading(false);
     }
-  }, [isAdmin]);
+  }, [mounted, isAdmin]);
 
   const loadDashboardData = async () => {
     try {
