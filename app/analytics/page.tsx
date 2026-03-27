@@ -47,21 +47,6 @@ interface PremiumAccess {
   daysRemaining?: number;
 }
 
-function BaseAccountSection() {
-  const { address, isConnected } = useBaseAccount();
-  
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-        <span className="text-sm text-green-700">Base Account Connected</span>
-        <span className="text-xs text-green-600 ml-auto">
-          {address?.slice(0, 6)}...{address?.slice(-4)}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export default function AnalyticsPage() {
   const { isConnected, address } = useBaseAccount();
@@ -105,11 +90,6 @@ export default function AnalyticsPage() {
   };
 
   const handlePaymentSuccess = async (transactionId: string) => {
-    if (!address) {
-      toast.error('Please connect your wallet first');
-      return;
-    }
-
     setPaymentLoading(true);
     
     try {
@@ -163,63 +143,6 @@ export default function AnalyticsPage() {
       default: return 'text-gray-600 bg-gray-100';
     }
   };
-
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8">Premium Analytics</h1>
-            <div className="max-w-md mx-auto">
-              <div className="bg-white rounded-lg shadow-lg p-8">
-                <div className="text-gray-400 mb-4">
-                  <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Connect Your Wallet</h3>
-                <p className="text-sm text-gray-600 mb-6">
-                  Connect your Base Account to access premium analytics and insights.
-                </p>
-                <BaseAccountSection />
-              </div>
-            </div>
-
-            {/* Payment Section */}
-            <div className="max-w-md mx-auto mt-12">
-              <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-blue-200">
-                <div className="text-center">
-                  <div className="bg-blue-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <svg className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Unlock Premium Analytics</h3>
-                  <p className="text-gray-600 mb-6">
-                    Get instant access to detailed analytics and insights for just $5 USDC
-                  </p>
-                  <div className="space-y-4">
-                    <BasePay
-                      amount="0.01"
-                      onSuccess={handlePaymentSuccess}
-                      onError={handlePaymentError}
-                      disabled={paymentLoading}
-                    />
-                    {paymentLoading && (
-                      <div className="flex items-center justify-center space-x-2 text-blue-600">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                        <span className="text-sm">Processing payment...</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
