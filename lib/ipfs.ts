@@ -27,8 +27,8 @@ export class IPFSService {
   private baseUrl = 'https://api.pinata.cloud';
 
   constructor() {
-    this.apiKey = process.env.PINATA_API_KEY || '';
-    this.apiSecret = process.env.PINATA_API_SECRET || '';
+    this.apiKey = process.env.PINATA_API_KEY || process.env.NEXT_PUBLIC_PINATA_API_KEY || '';
+    this.apiSecret = process.env.PINATA_API_SECRET || process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY || '';
     
     // Don't throw error in constructor - let individual methods handle it
     if (!this.apiKey || !this.apiSecret) {
