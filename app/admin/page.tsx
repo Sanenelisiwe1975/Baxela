@@ -57,9 +57,8 @@ interface AdminStats {
 // Admin addresses — add the platform account and any operator addresses here.
 // In production, manage these via environment variables.
 const ADMIN_ADDRESSES = [
-  '0x742d35cc6634c0532925a3b8d4c9db96c4b5da5e', // platform account
-  '0x1234567890123456789012345678901234567890',
-  '0x2345678901234567890123456789012345678901'
+  '0x742d35cc6634c0532925a3b8d4c9db96c4b5da5e',
+  '0xf60ab179fe7ecdc1320b375b7185302ee23c4888',
 ];
 
 // Base Account Connection Component
