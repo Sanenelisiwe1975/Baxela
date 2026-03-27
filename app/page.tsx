@@ -58,6 +58,8 @@ export default function Home() {
     images: [],
     documents: []
   });
+  const [detectedCoords, setDetectedCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [detectingLocation, setDetectingLocation] = useState(false);
 
   // File handling functions
   const handleFileUpload = (type: 'videos' | 'images' | 'documents', files: FileList | null) => {
@@ -100,6 +102,38 @@ export default function Home() {
     }));
   };
 
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+    setDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            { headers: { 'User-Agent': 'Baxela/1.0' } }
+          );
+          const data = await response.json();
+          const displayName = data.display_name || `${latitude}, ${longitude}`;
+          setFormData((prev) => ({ ...prev, location: displayName }));
+          setDetectedCoords({ lat: latitude, lon: longitude });
+        } catch {
+          setFormData((prev) => ({ ...prev, location: `${latitude}, ${longitude}` }));
+          setDetectedCoords({ lat: latitude, lon: longitude });
+        } finally {
+          setDetectingLocation(false);
+        }
+      },
+      () => {
+        setDetectingLocation(false);
+        toast.error('Could not detect location. Please enter manually.');
+      }
+    );
+  };
+
   const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -114,7 +148,13 @@ export default function Home() {
       formDataToSend.append('category', formData.category === 'voting_irregularity' ? 'irregularities' : formData.category);
       formDataToSend.append('reportedBy', address || '');
       formDataToSend.append('severity', 'medium');
-      
+
+      // Append coordinates if detected
+      if (detectedCoords) {
+        formDataToSend.append('latitude', String(detectedCoords.lat));
+        formDataToSend.append('longitude', String(detectedCoords.lon));
+      }
+
       // Add files
       attachments.videos.forEach((file, index) => {
         formDataToSend.append(`video_${index}`, file);
@@ -154,6 +194,7 @@ export default function Home() {
           images: [],
           documents: []
         });
+        setDetectedCoords(null);
         setShowReportForm(false);
         
         if (data.ipfsHash) {
@@ -256,13 +297,39 @@ export default function Home() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Location
                 </label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => {
+                      setFormData({...formData, location: e.target.value});
+                      setDetectedCoords(null);
+                    }}
+                    placeholder="Enter location or detect automatically"
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleDetectLocation}
+                    disabled={detectingLocation}
+                    className="flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-60 whitespace-nowrap text-sm"
+                  >
+                    {detectingLocation ? (
+                      <>
+                        <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
+                        <span>Detecting...</span>
+                      </>
+                    ) : (
+                      <span>📍 Detect My Location</span>
+                    )}
+                  </button>
+                </div>
+                {detectedCoords && (
+                  <p className="text-xs text-green-600 mt-1">
+                    GPS coordinates captured ({detectedCoords.lat.toFixed(5)}, {detectedCoords.lon.toFixed(5)})
+                  </p>
+                )}
               </div>
 
               <div className="mb-6">

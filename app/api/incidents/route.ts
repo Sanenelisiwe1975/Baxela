@@ -101,6 +101,8 @@ export async function POST(request: NextRequest) {
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
+      const lat = parseFloat(formData.get('latitude') as string);
+      const lon = parseFloat(formData.get('longitude') as string);
       body = {
         title: formData.get('title') as string,
         description: formData.get('description') as string,
@@ -108,6 +110,8 @@ export async function POST(request: NextRequest) {
         category: formData.get('category') as string,
         reportedBy: formData.get('reportedBy') as string,
         severity: formData.get('severity') as string,
+        latitude: !isNaN(lat) ? lat : undefined,
+        longitude: !isNaN(lon) ? lon : undefined,
       };
       formData.forEach((value, key) => {
         if (key.startsWith('video_') && value instanceof File) files.videos.push(value);
@@ -129,7 +133,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Valid reporter address is required' }, { status: 400 });
 
     const severity = body.severity || determineSeverity(body.category, body.description);
-    const coords = geocodeLocation(body.location);
+    // Use submitted coordinates if available, fall back to geocode lookup
+    const submittedLat = body.latitude != null ? body.latitude : undefined;
+    const submittedLon = body.longitude != null ? body.longitude : undefined;
+    const geocoded = (submittedLat == null || submittedLon == null) ? geocodeLocation(body.location) : null;
+    const finalLat = submittedLat ?? (geocoded ? geocoded[0] : null);
+    const finalLon = submittedLon ?? (geocoded ? geocoded[1] : null);
 
     // Upload files to IPFS (skip files over 50MB)
     const attachmentHashes: string[] = [];
@@ -170,8 +179,8 @@ export async function POST(request: NextRequest) {
         title: body.title.trim(),
         category: body.category,
         location: body.location.trim(),
-        latitude: coords ? coords[0] : null,
-        longitude: coords ? coords[1] : null,
+        latitude: finalLat,
+        longitude: finalLon,
         description: body.description.trim(),
         reportedBy: body.reportedBy.toLowerCase(),
         severity,

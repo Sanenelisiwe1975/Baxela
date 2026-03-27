@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useBaseAccount } from '@/lib/baseAccount';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+const LeafletMap = dynamic(() => import('@/components/IncidentMap'), { ssr: false });
 
 interface IncidentReport {
   id: string;
@@ -23,6 +26,8 @@ interface IncidentReport {
   verificationNotes?: string;
   assignedTo?: string;
   lastUpdated: Date;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface IncidentStats {
@@ -170,6 +175,7 @@ export default function IncidentMapPage() {
     status: 'all',
     severity: 'all'
   });
+  const [showMapView, setShowMapView] = useState(false);
 
   // Load incidents from API
   useEffect(() => {
@@ -290,11 +296,22 @@ export default function IncidentMapPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Incident Map</h1>
-          <p className="mt-2 text-gray-600">
-            Real-time monitoring of election incidents and irregularities
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Incident Map</h1>
+            <p className="mt-2 text-gray-600">
+              Real-time monitoring of election incidents and irregularities
+            </p>
+          </div>
+          {incidents.some(i => i.latitude != null && i.longitude != null) && (
+            <button
+              type="button"
+              onClick={() => setShowMapView((v) => !v)}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            >
+              {showMapView ? '📋 List View' : '🗺️ Map View'}
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -311,6 +328,7 @@ export default function IncidentMapPage() {
             </div>
             <p className="text-red-600">{error}</p>
             <button
+              type="button"
               onClick={() => window.location.reload()}
               className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
             >
@@ -398,6 +416,14 @@ export default function IncidentMapPage() {
                 </div>
               </div>
             </div>
+
+            {/* Leaflet interactive map — shown when map view is toggled on */}
+            {showMapView && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Interactive Map</h3>
+                <LeafletMap incidents={filteredIncidents} />
+              </div>
+            )}
 
             {/* Map and Details */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
