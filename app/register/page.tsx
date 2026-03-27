@@ -46,7 +46,8 @@ interface RegistrationFormData {
 
 // Citizen identity badge
 function BaseAccountSection() {
-  const { address } = useBaseAccount();
+  const { address, mounted } = useBaseAccount();
+  if (!mounted) return null;
 
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">

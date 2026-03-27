@@ -19,19 +19,21 @@ interface IncidentReport {
 
 // Base Account Display Component
 function BaseAccountDisplay() {
-  const { address, isConnected } = useBaseAccount();
+  const { address, mounted } = useBaseAccount();
+
+  if (!mounted) return null;
 
   return (
     <div className="flex items-center gap-3">
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-        <span className="text-sm text-gray-600">Base Account</span>
+        <span className="text-sm text-gray-600">Citizen ID</span>
       </div>
       <div className="text-sm text-gray-600">
         {address?.slice(0, 6)}...{address?.slice(-4)}
       </div>
       <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-        Connected
+        Active
       </span>
     </div>
   );

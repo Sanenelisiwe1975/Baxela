@@ -41,20 +41,22 @@ interface IncidentStats {
 
 // Base Account connection component
 function BaseAccountSection() {
-  const { address, isConnected } = useBaseAccount();
+  const { address, mounted } = useBaseAccount();
+
+  if (!mounted) return null;
 
   return (
-    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-green-800 font-medium">Base Account Connected</h3>
-          <p className="text-green-600 text-sm">
+          <h3 className="text-blue-800 font-medium">🏛️ Citizen ID</h3>
+          <p className="text-blue-600 text-sm">
             {address?.slice(0, 6)}...{address?.slice(-4)}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-green-700 text-sm">Connected</span>
+          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          <span className="text-blue-700 text-sm">Active</span>
         </div>
       </div>
     </div>

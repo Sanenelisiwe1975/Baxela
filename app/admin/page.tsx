@@ -47,7 +47,9 @@ const ADMIN_ADDRESSES = [
 
 // Base Account Connection Component
 function BaseAccountSection() {
-  const { address, isConnected } = useBaseAccount();
+  const { address, mounted } = useBaseAccount();
+
+  if (!mounted) return null;
 
   const isAdmin = ADMIN_ADDRESSES.includes(address.toLowerCase());
 
@@ -83,7 +85,7 @@ function BaseAccountSection() {
 }
 
 export default function AdminDashboard() {
-  const { address, isConnected } = useBaseAccount();
+  const { address, mounted } = useBaseAccount();
   const [elections, setElections] = useState<Election[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -99,7 +101,6 @@ export default function AdminDashboard() {
     positions: ['']
   });
 
-  const isAdmin = address && ADMIN_ADDRESSES.includes(address.toLowerCase());
 
   useEffect(() => {
     if (isAdmin) {
@@ -246,6 +247,7 @@ export default function AdminDashboard() {
     }
   };
 
+  const isAdmin = mounted && ADMIN_ADDRESSES.includes(address.toLowerCase());
   const showAdminPrompt = !isAdmin;
 
   if (loading) {
