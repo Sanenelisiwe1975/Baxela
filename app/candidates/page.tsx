@@ -29,33 +29,20 @@ interface CandidateFormData {
   electionId: string;
 }
 
-// Base Account Connection Component
+// Citizen Identity Badge
 function BaseAccountSection() {
-  const { address, isConnected } = useBaseAccount();
-
-  if (!isConnected) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-semibold text-yellow-800 mb-2">
-          Connect Your Wallet
-        </h3>
-        <p className="text-yellow-700 mb-4">
-          You need to connect your Base Account to register as a candidate or view your profile.
-        </p>
-      </div>
-    );
-  }
+  const { address } = useBaseAccount();
 
   return (
-    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-green-800">Base Account Connected</h3>
-          <p className="text-green-700 text-sm">
+          <h3 className="text-lg font-semibold text-blue-800">Citizen ID</h3>
+          <p className="text-blue-700 text-sm">
             {address?.slice(0, 6)}...{address?.slice(-4)}
           </p>
         </div>
-        <div className="text-green-600 text-2xl">✅</div>
+        <div className="text-blue-600 text-2xl">🏛️</div>
       </div>
     </div>
   );
@@ -110,11 +97,6 @@ export default function CandidatesPage() {
   const handleSubmitRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isConnected || !address) {
-      toast.error('Please connect your wallet first');
-      return;
-    }
-
     if (userCandidate) {
       toast.error('You are already registered as a candidate');
       return;
@@ -242,24 +224,15 @@ export default function CandidatesPage() {
 
       {/* Registration Section */}
       <div className="mb-8">
-        {!isConnected ? (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-yellow-800 mb-2">
-              Want to Register as a Candidate?
-            </h3>
-            <p className="text-yellow-700 mb-4">
-              Connect your Base Account to register as a candidate and manage your profile.
-            </p>
-            <BaseAccountSection />
-          </div>
-        ) : !userCandidate ? (
+        {!userCandidate && (
           <button
+            type="button"
             onClick={() => setShowRegistrationForm(true)}
             className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
           >
             Register as Candidate
           </button>
-        ) : null}
+        )}
       </div>
 
       {/* Registration Form Modal */}
