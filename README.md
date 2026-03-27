@@ -15,7 +15,7 @@ Baxela is a Web3-powered platform for transparent and secure elections. Citizens
 - **Candidate Registration** — Register as a candidate with full profile and platform details.
 - **Voter Registration** — Submit voter registration with identity verification.
 - **Analytics** — Premium analytics dashboard with regional incident hotspots and patterns.
-- **Admin Dashboard** — Manage elections, verify candidates, and oversee incident reports.
+- **Admin Dashboard** — Manage elections, verify candidates, and oversee incident reports. Admins can verify, investigate, resolve, or dismiss reports with notes and officer assignment.
 - **USSD Reporting** — Citizens without smartphones can report incidents by dialing `*384*1#` on any basic phone. No data or internet required.
 - **Smart Wallet Sign-in** — Optional sign-in via Coinbase Smart Wallet (passkey/biometrics). No seed phrase needed.
 - **Anonymous Browsing** — Every visitor gets an automatic anonymous Citizen ID. No account required.
@@ -106,7 +106,7 @@ Open [http://localhost:3000](http://localhost:3000).
 │   ├── register/             # Voter registration
 │   ├── incidents/            # Incident viewer with map
 │   ├── analytics/            # Premium analytics
-│   ├── admin/                # Admin dashboard
+│   ├── admin/                # Admin dashboard (elections, candidates, incidents)
 │   └── api/
 │       ├── incidents/        # Incident CRUD + IPFS upload
 │       ├── elections/        # Elections API
@@ -128,6 +128,21 @@ Open [http://localhost:3000](http://localhost:3000).
     ├── schema.prisma         # Database schema
     └── seed.ts               # Demo data seed script
 ```
+
+---
+
+## Admin — Incident Approval
+
+Reported incidents go through a review workflow managed from the **Admin Dashboard** (`/admin`):
+
+| Action | Status change | Description |
+|---|---|---|
+| **Verify** | pending → investigating | Confirms the report is credible; assigns for investigation |
+| **Resolve** | any → resolved | Marks the incident as dealt with |
+| **Dismiss** | any → dismissed | Marks as false report or duplicate |
+| **Add Notes** | — | Admin writes verification notes and assigns to an officer |
+
+Admin access is restricted to whitelisted wallet/Citizen ID addresses defined in `app/admin/page.tsx`. The dashboard shows a **Pending Incidents** count and allows filtering by status (All / Pending / Investigating / Resolved / Dismissed).
 
 ---
 
