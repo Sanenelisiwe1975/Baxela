@@ -8,12 +8,15 @@ Baxela is a Web3-powered platform for transparent and secure elections. Citizens
 
 ## Features
 
-- **Incident Reporting** — Submit reports with title, location, category, and file attachments (video, images, documents). Evidence is stored on IPFS via Pinata for permanent, decentralized storage.
+- **Incident Reporting** — Submit reports with title, location, category, and file attachments (video, images, documents up to 50MB). Evidence is stored on IPFS via Pinata for permanent, decentralized storage.
+- **GPS Geolocation** — Auto-detect your location when reporting. Coordinates are stored with the incident and displayed on an interactive map.
+- **Interactive Map** — View all incidents as colour-coded pins on a live map (orange=pending, blue=verified, green=resolved).
 - **Voting** — Browse active elections and cast votes. No sign-in required.
 - **Candidate Registration** — Register as a candidate with full profile and platform details.
 - **Voter Registration** — Submit voter registration with identity verification.
 - **Analytics** — Premium analytics dashboard with regional incident hotspots and patterns.
 - **Admin Dashboard** — Manage elections, verify candidates, and oversee incident reports.
+- **USSD Reporting** — Citizens without smartphones can report incidents by dialing `*384*1#` on any basic phone. No data or internet required.
 - **Smart Wallet Sign-in** — Optional sign-in via Coinbase Smart Wallet (passkey/biometrics). No seed phrase needed.
 - **Anonymous Browsing** — Every visitor gets an automatic anonymous Citizen ID. No account required.
 
@@ -24,8 +27,10 @@ Baxela is a Web3-powered platform for transparent and secure elections. Citizens
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 16, TypeScript, Tailwind CSS |
+| Maps | Leaflet, OpenStreetMap, Nominatim (reverse geocoding) |
 | Blockchain | Base chain (Wagmi, Viem), Coinbase Smart Wallet |
 | Storage | PostgreSQL (Prisma ORM), IPFS (Pinata) |
+| USSD | Africa's Talking |
 | Deployment | Vercel |
 
 ---
@@ -95,17 +100,25 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```
 ├── app/
-│   ├── page.tsx              # Home — incident reporting
+│   ├── page.tsx              # Home — incident reporting with geolocation
 │   ├── voting/               # Elections & voting
 │   ├── candidates/           # Candidate listing & registration
 │   ├── register/             # Voter registration
-│   ├── incidents/            # Incident viewer
+│   ├── incidents/            # Incident viewer with map
 │   ├── analytics/            # Premium analytics
 │   ├── admin/                # Admin dashboard
-│   └── api/                  # Backend API routes
+│   └── api/
+│       ├── incidents/        # Incident CRUD + IPFS upload
+│       ├── elections/        # Elections API
+│       ├── votes/            # Voting API
+│       ├── candidates/       # Candidates API
+│       ├── voter-registration/
+│       ├── analytics/
+│       └── ussd/             # Africa's Talking USSD handler
 ├── components/
 │   ├── Navigation.tsx        # Top navigation bar
 │   ├── SmartWalletButton.tsx # Sign in / sign out button
+│   ├── IncidentMap.tsx       # Leaflet map component
 │   └── BasePay.tsx           # Payment component
 ├── lib/
 │   ├── baseAccount.ts        # Identity hook (session ID + Smart Wallet)
@@ -115,6 +128,32 @@ Open [http://localhost:3000](http://localhost:3000).
     ├── schema.prisma         # Database schema
     └── seed.ts               # Demo data seed script
 ```
+
+---
+
+## USSD Integration
+
+Citizens without smartphones or internet access can report incidents via USSD on any basic mobile phone:
+
+```
+Dial *384*1#
+
+1. Report Incident
+   → Enter location → Select category → Describe → Submitted ✓
+
+2. My Reports
+   → Shows your last 3 submitted reports with status
+
+3. Active Elections
+   → Lists currently active elections
+```
+
+Powered by **Africa's Talking**. The USSD callback URL is:
+```
+https://baxela.vercel.app/api/ussd
+```
+
+Test the flow at: [baxela.vercel.app/api/ussd/test](https://baxela.vercel.app/api/ussd/test)
 
 ---
 
@@ -141,5 +180,6 @@ Baxela is designed for everyone — no crypto knowledge required:
 
 1. **Anonymous** — On first visit, a unique Citizen ID is generated in the browser and stored locally. Users can immediately report incidents and vote.
 2. **Signed in** — Clicking "Sign in" opens Coinbase Smart Wallet. Users approve with Face ID / fingerprint / passkey. Their wallet address becomes their persistent identity across devices. No seed phrase. No downloads.
+3. **USSD** — Users on basic phones are identified by their phone number. No app, no internet, no wallet needed.
 
 The blockchain layer runs entirely in the background.
