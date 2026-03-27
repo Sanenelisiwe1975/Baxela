@@ -101,6 +101,7 @@ export default function AdminDashboard() {
     positions: ['']
   });
 
+  const isAdmin = mounted && ADMIN_ADDRESSES.includes(address.toLowerCase());
 
   useEffect(() => {
     if (isAdmin) {
@@ -247,7 +248,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const isAdmin = mounted && ADMIN_ADDRESSES.includes(address.toLowerCase());
   const showAdminPrompt = !isAdmin;
 
   if (loading) {
