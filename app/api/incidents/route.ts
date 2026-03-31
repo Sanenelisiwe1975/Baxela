@@ -8,13 +8,16 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file
 
 function determineSeverity(category: string, description: string): string {
   const lower = description.toLowerCase();
-  if (['violence', 'threat', 'weapon', 'assault', 'emergency'].some(k => lower.includes(k))) return 'critical';
-  if (category === 'violence' || category === 'voter_intimidation') return 'critical';
-  if (['intimidation', 'malfunction', 'tampering', 'fraud'].some(k => lower.includes(k))) return 'high';
+  if (['violence', 'threat', 'weapon', 'assault', 'emergency', 'collapse', 'structural failure'].some(k => lower.includes(k))) return 'critical';
+  if (['violence', 'voter_intimidation', 'structural_risk'].includes(category)) return 'critical';
+  if (['intimidation', 'malfunction', 'tampering', 'fraud', 'illegal'].some(k => lower.includes(k))) return 'high';
+  if (['unauthorized_construction', 'deviation_from_plans'].includes(category)) return 'high';
   if (['delay', 'confusion', 'technical', 'equipment'].some(k => lower.includes(k))) return 'medium';
   switch (category) {
     case 'irregularities': return 'high';
     case 'technical_issues': return 'medium';
+    case 'no_permit': return 'medium';
+    case 'illegal_land_use': return 'medium';
     default: return 'low';
   }
 }
@@ -113,6 +116,11 @@ export async function POST(request: NextRequest) {
         latitude: !isNaN(lat) ? lat : undefined,
         longitude: !isNaN(lon) ? lon : undefined,
       };
+      body.reportType = (formData.get('reportType') as string) || 'election';
+      body.erfNumber = (formData.get('erfNumber') as string) || undefined;
+      body.permitNumber = (formData.get('permitNumber') as string) || undefined;
+      body.constructionType = (formData.get('constructionType') as string) || undefined;
+      body.zone = (formData.get('zone') as string) || undefined;
       formData.forEach((value, key) => {
         if (key.startsWith('video_') && value instanceof File) files.videos.push(value);
         else if (key.startsWith('image_') && value instanceof File) files.images.push(value);
@@ -188,6 +196,11 @@ export async function POST(request: NextRequest) {
         verified: false,
         ipfsHash: ipfsHash || null,
         attachments: attachmentHashes,
+        reportType: body.reportType || 'election',
+        erfNumber: body.erfNumber || null,
+        permitNumber: body.permitNumber || null,
+        constructionType: body.constructionType || null,
+        zone: body.zone || null,
       },
     });
 
