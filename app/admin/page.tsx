@@ -412,6 +412,7 @@ export default function AdminDashboard() {
               { id: 'incidents', label: 'Incidents', icon: '🚨' }
             ].map((tab) => (
               <button
+                type="button"
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`py-4 px-2 border-b-2 font-medium text-sm ${
@@ -492,6 +493,7 @@ export default function AdminDashboard() {
                     <div className="flex space-x-2">
                       {election.status === 'draft' && (
                         <button
+                          type="button"
                           onClick={() => handleUpdateElectionStatus(election.id, 'active')}
                           className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
                         >
@@ -500,6 +502,7 @@ export default function AdminDashboard() {
                       )}
                       {election.status === 'active' && (
                         <button
+                          type="button"
                           onClick={() => handleUpdateElectionStatus(election.id, 'completed')}
                           className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                         >
@@ -507,6 +510,7 @@ export default function AdminDashboard() {
                         </button>
                       )}
                       <button
+                        type="button"
                         onClick={() => handleUpdateElectionStatus(election.id, 'cancelled')}
                         className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
                       >
