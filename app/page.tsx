@@ -249,8 +249,9 @@ export default function Home() {
 
             <form onSubmit={handleSubmitReport}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <label htmlFor="report-title" className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                 <input
+                  id="report-title"
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -260,8 +261,9 @@ export default function Home() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <label htmlFor="report-category" className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                 <select
+                  id="report-category"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -311,8 +313,9 @@ export default function Home() {
                     />
                   </div>
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Construction Type <span className="text-gray-400 font-normal">(optional)</span></label>
+                    <label htmlFor="construction-type" className="block text-sm font-medium text-gray-700 mb-2">Construction Type <span className="text-gray-400 font-normal">(optional)</span></label>
                     <select
+                      id="construction-type"
                       value={formData.constructionType}
                       onChange={(e) => setFormData({ ...formData, constructionType: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -361,8 +364,9 @@ export default function Home() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label htmlFor="report-description" className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
+                  id="report-description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
