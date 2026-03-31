@@ -328,6 +328,8 @@ export default function AdminDashboard() {
       case 'investigating': return 'bg-blue-100 text-blue-800';
       case 'resolved': return 'bg-green-100 text-green-800';
       case 'dismissed': return 'bg-gray-100 text-gray-600';
+      case 'notice_issued': return 'bg-orange-100 text-orange-800';
+      case 'enforcement_action': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-600';
     }
   };
@@ -335,6 +337,11 @@ export default function AdminDashboard() {
   const filteredIncidents = incidentFilter === 'all'
     ? incidents
     : incidents.filter(i => i.status === incidentFilter);
+
+  const filteredCompliance = (() => {
+    const compliance = incidents.filter(i => i.reportType === 'building_compliance');
+    return complianceFilter === 'all' ? compliance : compliance.filter(i => i.status === complianceFilter);
+  })();
 
   const showAdminPrompt = !isAdmin;
 
@@ -352,8 +359,8 @@ export default function AdminDashboard() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Election Management Dashboard</h1>
-        <p className="text-gray-600">Administrative control panel for managing elections and candidates</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Baxela Admin Dashboard</h1>
+        <p className="text-gray-600">Administrative control panel for elections, candidates, and building compliance</p>
       </div>
 
       {/* Admin Access Status */}
@@ -409,7 +416,8 @@ export default function AdminDashboard() {
               { id: 'elections', label: 'Elections', icon: '🗳️' },
               { id: 'candidates', label: 'Candidates', icon: '👥' },
               { id: 'create', label: 'Create Election', icon: '➕' },
-              { id: 'incidents', label: 'Incidents', icon: '🚨' }
+              { id: 'incidents', label: 'Incidents', icon: '🚨' },
+              { id: 'compliance', label: 'Building Compliance', icon: '🏗️' },
             ].map((tab) => (
               <button
                 type="button"
@@ -544,6 +552,7 @@ export default function AdminDashboard() {
                           </span>
                         ) : (
                           <button
+                            type="button"
                             onClick={() => handleVerifyCandidate(candidate.id)}
                             className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700"
                           >
@@ -566,10 +575,11 @@ export default function AdminDashboard() {
               <form onSubmit={handleCreateElection} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="election-title" className="block text-sm font-medium text-gray-700 mb-2">
                       Election Title *
                     </label>
                     <input
+                      id="election-title"
                       type="text"
                       value={newElection.title}
                       onChange={(e) => setNewElection({...newElection, title: e.target.value})}
@@ -579,10 +589,11 @@ export default function AdminDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="election-type" className="block text-sm font-medium text-gray-700 mb-2">
                       Election Type *
                     </label>
                     <select
+                      id="election-type"
                       value={newElection.type}
                       onChange={(e) => setNewElection({...newElection, type: e.target.value as Election['type']})}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -596,10 +607,11 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="election-description" className="block text-sm font-medium text-gray-700 mb-2">
                     Description *
                   </label>
                   <textarea
+                    id="election-description"
                     value={newElection.description}
                     onChange={(e) => setNewElection({...newElection, description: e.target.value})}
                     rows={3}
@@ -610,10 +622,11 @@ export default function AdminDashboard() {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="election-start-date" className="block text-sm font-medium text-gray-700 mb-2">
                       Start Date *
                     </label>
                     <input
+                      id="election-start-date"
                       type="datetime-local"
                       value={newElection.startDate}
                       onChange={(e) => setNewElection({...newElection, startDate: e.target.value})}
@@ -623,10 +636,11 @@ export default function AdminDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="election-end-date" className="block text-sm font-medium text-gray-700 mb-2">
                       End Date *
                     </label>
                     <input
+                      id="election-end-date"
                       type="datetime-local"
                       value={newElection.endDate}
                       onChange={(e) => setNewElection({...newElection, endDate: e.target.value})}
@@ -707,6 +721,7 @@ export default function AdminDashboard() {
                   const label = filter.charAt(0).toUpperCase() + filter.slice(1);
                   return (
                     <button
+                      type="button"
                       key={filter}
                       onClick={() => setIncidentFilter(filter)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -782,6 +797,7 @@ export default function AdminDashboard() {
                     <div className="flex flex-wrap gap-2 mt-3">
                       {!incident.verified && incident.status !== 'resolved' && incident.status !== 'dismissed' && (
                         <button
+                          type="button"
                           onClick={() => handleUpdateIncident(incident.id, { verified: true, status: 'investigating' })}
                           className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                         >
@@ -790,6 +806,7 @@ export default function AdminDashboard() {
                       )}
                       {incident.status !== 'resolved' && incident.status !== 'dismissed' && (
                         <button
+                          type="button"
                           onClick={() => handleUpdateIncident(incident.id, { status: 'resolved' })}
                           className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
                         >
@@ -798,6 +815,7 @@ export default function AdminDashboard() {
                       )}
                       {incident.status !== 'dismissed' && (
                         <button
+                          type="button"
                           onClick={() => handleUpdateIncident(incident.id, { status: 'dismissed' })}
                           className="bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500"
                         >
@@ -805,6 +823,7 @@ export default function AdminDashboard() {
                         </button>
                       )}
                       <button
+                        type="button"
                         onClick={() => {
                           if (selectedIncident?.id === incident.id) {
                             setSelectedIncident(null);
@@ -858,6 +877,7 @@ export default function AdminDashboard() {
 
                         <div className="flex gap-2">
                           <button
+                            type="button"
                             onClick={() => handleUpdateIncident(incident.id, {
                               verificationNotes,
                               assignedTo
@@ -867,6 +887,7 @@ export default function AdminDashboard() {
                             Save Notes
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
                               setSelectedIncident(null);
                               setVerificationNotes('');
@@ -874,6 +895,182 @@ export default function AdminDashboard() {
                             }}
                             className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors"
                           >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Building Compliance Tab */}
+          {activeTab === 'compliance' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Building Compliance Reports</h2>
+                <p className="text-gray-500 text-sm">
+                  {incidents.filter(i => i.reportType === 'building_compliance').length} reports &mdash;{' '}
+                  {incidents.filter(i => i.reportType === 'building_compliance' && i.status === 'pending').length} pending review
+                </p>
+              </div>
+
+              {/* Filter Bar */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {(['all', 'pending', 'investigating', 'notice_issued', 'enforcement_action', 'resolved', 'dismissed'] as const).map((filter) => {
+                  const base = incidents.filter(i => i.reportType === 'building_compliance');
+                  const count = filter === 'all' ? base.length : base.filter(i => i.status === filter).length;
+                  const label = filter === 'notice_issued' ? 'Notice Issued' : filter === 'enforcement_action' ? 'Enforcement Action' : filter.charAt(0).toUpperCase() + filter.slice(1);
+                  return (
+                    <button
+                      type="button"
+                      key={filter}
+                      onClick={() => setComplianceFilter(filter)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        complianceFilter === filter ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Compliance Report Cards */}
+              <div className="space-y-4">
+                {filteredCompliance.length === 0 && (
+                  <div className="border border-gray-200 rounded-lg p-8 text-center text-gray-500">
+                    No building compliance reports match the selected filter.
+                  </div>
+                )}
+
+                {filteredCompliance.map((incident) => (
+                  <div key={incident.id} className="border border-orange-100 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0 mr-4">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{incident.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getSeverityBadgeClass(incident.severity)}`}>
+                            {incident.severity}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(incident.status)}`}>
+                            {incident.status === 'notice_issued' ? 'Notice Issued' : incident.status === 'enforcement_action' ? 'Enforcement Action' : incident.status}
+                          </span>
+                          {incident.verified && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-500 space-x-3">
+                          <span>Category: <span className="text-gray-700">{incident.category.replace(/_/g, ' ')}</span></span>
+                          <span>Location: <span className="text-gray-700">{incident.location}</span></span>
+                        </div>
+                        {(incident.erfNumber || incident.permitNumber || incident.constructionType) && (
+                          <div className="text-sm text-gray-500 mt-1 space-x-3">
+                            {incident.erfNumber && <span>Erf: <span className="text-gray-700">{incident.erfNumber}</span></span>}
+                            {incident.permitNumber && <span>Permit: <span className="text-gray-700">{incident.permitNumber}</span></span>}
+                            {incident.constructionType && <span>Type: <span className="text-gray-700">{incident.constructionType.replace(/_/g, ' ')}</span></span>}
+                          </div>
+                        )}
+                        <div className="text-xs text-gray-400 mt-1">{new Date(incident.timestamp).toLocaleString()}</div>
+                        {incident.ipfsHash && (
+                          <div className="mt-1">
+                            <a href={`https://gateway.pinata.cloud/ipfs/${incident.ipfsHash}`} target="_blank" rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline font-mono">
+                              IPFS: {incident.ipfsHash.slice(0, 20)}...
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {!incident.verified && incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateIncident(incident.id, { verified: true, status: 'investigating' })}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                        >
+                          Verify
+                        </button>
+                      )}
+                      {incident.status === 'investigating' && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateIncident(incident.id, { status: 'notice_issued' })}
+                          className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700"
+                        >
+                          Issue Notice
+                        </button>
+                      )}
+                      {incident.status === 'notice_issued' && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateIncident(incident.id, { status: 'enforcement_action' })}
+                          className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                        >
+                          Enforce
+                        </button>
+                      )}
+                      {incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateIncident(incident.id, { status: 'resolved' })}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                        >
+                          Resolve
+                        </button>
+                      )}
+                      {incident.status !== 'dismissed' && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateIncident(incident.id, { status: 'dismissed' })}
+                          className="bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500"
+                        >
+                          Dismiss
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedIncident?.id === incident.id) {
+                            setSelectedIncident(null); setVerificationNotes(''); setAssignedTo('');
+                          } else {
+                            setSelectedIncident(incident);
+                            setVerificationNotes(incident.verificationNotes || '');
+                            setAssignedTo(incident.assignedTo || '');
+                          }
+                        }}
+                        className="border border-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-50"
+                      >
+                        {selectedIncident?.id === incident.id ? 'Close' : 'Details'}
+                      </button>
+                    </div>
+
+                    {selectedIncident?.id === incident.id && (
+                      <div className="mt-4 border-t border-gray-100 pt-4 space-y-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">Full Description</h4>
+                          <p className="text-gray-600 text-sm whitespace-pre-wrap">{incident.description}</p>
+                        </div>
+                        <div>
+                          <label htmlFor="compliance-notes" className="block text-sm font-medium text-gray-700 mb-1">Verification Notes</label>
+                          <input id="compliance-notes" type="text" value={verificationNotes} onChange={(e) => setVerificationNotes(e.target.value)}
+                            placeholder="Add verification notes..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                        </div>
+                        <div>
+                          <label htmlFor="compliance-officer" className="block text-sm font-medium text-gray-700 mb-1">Assign to Officer</label>
+                          <input id="compliance-officer" type="text" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}
+                            placeholder="Officer name or ID..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => handleUpdateIncident(incident.id, { verificationNotes, assignedTo })}
+                            className="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700 transition-colors">
+                            Save Notes
+                          </button>
+                          <button type="button" onClick={() => { setSelectedIncident(null); setVerificationNotes(''); setAssignedTo(''); }}
+                            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors">
                             Close
                           </button>
                         </div>
