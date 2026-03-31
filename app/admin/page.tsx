@@ -42,6 +42,11 @@ interface Incident {
   verificationNotes?: string;
   assignedTo?: string;
   ipfsHash?: string;
+  reportType?: string;
+  erfNumber?: string;
+  permitNumber?: string;
+  constructionType?: string;
+  zone?: string;
   timestamp: string;
 }
 
@@ -109,9 +114,10 @@ export default function AdminDashboard() {
   const [verificationNotes, setVerificationNotes] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [incidentFilter, setIncidentFilter] = useState<'all' | 'pending' | 'investigating' | 'resolved' | 'dismissed'>('pending');
+  const [complianceFilter, setComplianceFilter] = useState<'all' | 'pending' | 'investigating' | 'notice_issued' | 'enforcement_action' | 'resolved' | 'dismissed'>('pending');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'elections' | 'candidates' | 'create' | 'incidents'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'elections' | 'candidates' | 'create' | 'incidents' | 'compliance'>('overview');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newElection, setNewElection] = useState({
     title: '',
