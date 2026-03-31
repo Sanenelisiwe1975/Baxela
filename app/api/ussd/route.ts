@@ -9,6 +9,15 @@ const CATEGORY_MAP: Record<string, string> = {
   '5': 'other',
 };
 
+const COMPLIANCE_CATEGORY_MAP: Record<string, string> = {
+  '1': 'unauthorized_construction',
+  '2': 'no_permit',
+  '3': 'structural_risk',
+  '4': 'illegal_land_use',
+  '5': 'deviation_from_plans',
+  '6': 'other',
+};
+
 function con(message: string): NextResponse {
   return new NextResponse(`CON ${message}`, {
     status: 200,
@@ -37,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Main menu
     if (parts.length === 0) {
       return con(
-        'Welcome to Baxela\nElection Incident Reporting\n\n1. Report Incident\n2. My Reports\n3. Active Elections'
+        'Welcome to Baxela\n\n1. Report Election Incident\n2. Report Building Violation\n3. My Reports\n4. Active Elections'
       );
     }
 
@@ -89,8 +98,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Option 2: My Reports ───────────────────────────────────────────────────
+    // ── Option 2: Report Building Violation ───────────────────────────────────
     if (choice === '2') {
+      if (parts.length === 1) {
+        return con('Building Violation (1/3)\nEnter the location:\n(address, erf number or area)');
+      }
+
+      const location = parts[1];
+
+      if (parts.length === 2) {
+        return con(
+          'Building Violation (2/3)\nSelect violation type:\n1. Unauthorized Construction\n2. No Permit Displayed\n3. Structural Risk\n4. Illegal Land Use\n5. Deviation from Plans\n6. Other'
+        );
+      }
+
+      const catInput = parts[2];
+
+      if (parts.length === 3) {
+        return con('Building Violation (3/3)\nDescribe the violation:\n(keep it brief)');
+      }
+
+      const description = parts.slice(3).join('*');
+      const category = COMPLIANCE_CATEGORY_MAP[catInput] || 'other';
+      const title = description.trim().substring(0, 50) || 'Building Violation Report';
+      const ref = sessionId.slice(-6).toUpperCase();
+
+      await prisma.incident.create({
+        data: {
+          title,
+          category,
+          location: location.trim(),
+          description: description.trim(),
+          reportedBy: phoneNumber,
+          severity: category === 'structural_risk' ? 'critical' : 'medium',
+          status: 'pending',
+          verified: false,
+          reportType: 'building_compliance',
+          attachments: [],
+        },
+      });
+
+      return end(
+        `Violation reported!\nRef: BLD-${ref}\n\nYour report has been recorded\nand will be investigated.\nDial again to report more.`
+      );
+    }
+
+    // ── Option 3: My Reports ───────────────────────────────────────────────────
+    if (choice === '3') {
       const incidents = await prisma.incident.findMany({
         where: { reportedBy: phoneNumber },
         orderBy: { timestamp: 'desc' },
