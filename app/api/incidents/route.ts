@@ -8,16 +8,26 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file
 
 function determineSeverity(category: string, description: string): string {
   const lower = description.toLowerCase();
-  if (['violence', 'threat', 'weapon', 'assault', 'emergency', 'collapse', 'structural failure'].some(k => lower.includes(k))) return 'critical';
-  if (['violence', 'voter_intimidation', 'structural_risk'].includes(category)) return 'critical';
-  if (['intimidation', 'malfunction', 'tampering', 'fraud', 'illegal'].some(k => lower.includes(k))) return 'high';
-  if (['unauthorized_construction', 'deviation_from_plans'].includes(category)) return 'high';
-  if (['delay', 'confusion', 'technical', 'equipment'].some(k => lower.includes(k))) return 'medium';
+  if (['violence', 'threat', 'weapon', 'assault', 'emergency', 'collapse', 'structural failure', 'death', 'kill', 'murder'].some(k => lower.includes(k))) return 'critical';
+  if (['violence', 'voter_intimidation', 'structural_risk', 'brutality', 'excessive_force', 'child_abuse', 'child_abandonment'].includes(category)) return 'critical';
+  if (['intimidation', 'malfunction', 'tampering', 'fraud', 'illegal', 'corrupt', 'bribe'].some(k => lower.includes(k))) return 'high';
+  if (['unauthorized_construction', 'deviation_from_plans', 'corruption_bribery', 'unlawful_arrest', 'domestic_violence', 'elderly_abuse'].includes(category)) return 'high';
+  if (['delay', 'confusion', 'technical', 'equipment', 'outage', 'sewage', 'pothole'].some(k => lower.includes(k))) return 'medium';
   switch (category) {
     case 'irregularities': return 'high';
     case 'technical_issues': return 'medium';
     case 'no_permit': return 'medium';
     case 'illegal_land_use': return 'medium';
+    case 'dereliction_of_duty': return 'medium';
+    case 'social_worker_misconduct': return 'medium';
+    case 'fraudulent_grant': return 'medium';
+    case 'water_outage': return 'high';
+    case 'no_electricity': return 'medium';
+    case 'roads_potholes': return 'medium';
+    case 'refuse_not_collected': return 'low';
+    case 'sewage_drainage': return 'high';
+    case 'public_lighting': return 'low';
+    case 'housing_rdp': return 'medium';
     default: return 'low';
   }
 }
@@ -121,6 +131,11 @@ export async function POST(request: NextRequest) {
       body.permitNumber = (formData.get('permitNumber') as string) || undefined;
       body.constructionType = (formData.get('constructionType') as string) || undefined;
       body.zone = (formData.get('zone') as string) || undefined;
+      body.badgeNumber = (formData.get('badgeNumber') as string) || undefined;
+      body.stationName = (formData.get('stationName') as string) || undefined;
+      body.caseReference = (formData.get('caseReference') as string) || undefined;
+      body.wardNumber = (formData.get('wardNumber') as string) || undefined;
+      body.municipalTicket = (formData.get('municipalTicket') as string) || undefined;
       formData.forEach((value, key) => {
         if (key.startsWith('video_') && value instanceof File) files.videos.push(value);
         else if (key.startsWith('image_') && value instanceof File) files.images.push(value);
@@ -201,6 +216,11 @@ export async function POST(request: NextRequest) {
         permitNumber: body.permitNumber || null,
         constructionType: body.constructionType || null,
         zone: body.zone || null,
+        badgeNumber: body.badgeNumber || null,
+        stationName: body.stationName || null,
+        caseReference: body.caseReference || null,
+        wardNumber: body.wardNumber || null,
+        municipalTicket: body.municipalTicket || null,
       },
     });
 
