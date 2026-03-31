@@ -11,11 +11,11 @@ export default function Navigation() {
 
   const navItems = [
     { href: '/', label: 'Home', icon: '🏠' },
-    { href: '/voting', label: 'Voting', icon: '🗳️' },
-    { href: '/candidates', label: 'Candidates', icon: '👥' },
-    { href: '/register', label: 'Register', icon: '📝' },
     { href: '/incidents', label: 'Incidents', icon: '🚨' },
     { href: '/analytics', label: 'Analytics', icon: '📊' },
+    { href: '/voting', label: 'Polls & Voting', icon: '🗳️' },
+    { href: '/candidates', label: 'Candidates', icon: '👥' },
+    { href: '/register', label: 'Voter Register', icon: '📝' },
     { href: '/admin', label: 'Admin', icon: '⚙️' },
   ];
 

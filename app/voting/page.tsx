@@ -154,8 +154,8 @@ export default function VotingPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Baxela Voting System</h1>
-          <p className="text-gray-600 mt-2">Participate in secure, transparent democratic elections</p>
+          <h1 className="text-3xl font-bold text-gray-900">Polls & Voting</h1>
+          <p className="text-gray-600 mt-2">Transparent voting for communities, student bodies, organisations, and internal governance — anyone can create a poll, everyone can verify the result.</p>
         </div>
 
         {loading ? (
@@ -166,7 +166,7 @@ export default function VotingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Elections List */}
             <div className="lg:col-span-2">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Available Elections</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Active Polls & Elections</h2>
               <div className="space-y-4">
                 {elections.map((election) => {
                   const status = getElectionStatus(election);

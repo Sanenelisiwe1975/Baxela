@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ipfsService } from '../../../lib/ipfs';
+import { notifyDepartment } from '../../../lib/notifyDepartment';
 
 export const maxDuration = 60; // allow up to 60s for large uploads
 
@@ -223,6 +224,9 @@ export async function POST(request: NextRequest) {
         municipalTicket: body.municipalTicket || null,
       },
     });
+
+    // Notify the relevant department — fire and forget, never blocks the response
+    notifyDepartment(incident).catch(() => {});
 
     return NextResponse.json(
       { success: true, message: 'Incident reported successfully', incident, ipfsHash: ipfsHash || null },
