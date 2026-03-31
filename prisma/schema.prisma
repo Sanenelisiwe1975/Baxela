@@ -64,6 +64,11 @@ model Incident {
   permitNumber      String?
   constructionType  String?
   zone              String?
+  badgeNumber       String?
+  stationName       String?
+  caseReference     String?
+  wardNumber        String?
+  municipalTicket   String?
   timestamp         DateTime @default(now())
   lastUpdated       DateTime @updatedAt
 }
