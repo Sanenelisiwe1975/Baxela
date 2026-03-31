@@ -163,8 +163,8 @@ export async function POST(request: NextRequest) {
       return con(`My Reports:\n${lines}\n\n0. Back`);
     }
 
-    // ── Option 3: Active Elections ─────────────────────────────────────────────
-    if (choice === '3') {
+    // ── Option 4: Active Elections ─────────────────────────────────────────────
+    if (choice === '4') {
       const elections = await prisma.election.findMany({
         where: { status: 'active' },
         orderBy: { startDate: 'asc' },
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
 
     // ── Fallback ───────────────────────────────────────────────────────────────
     return con(
-      'Welcome to Baxela\nElection Incident Reporting\n\n1. Report Incident\n2. My Reports\n3. Active Elections'
+      'Welcome to Baxela\n\n1. Report Election Incident\n2. Report Building Violation\n3. My Reports\n4. Active Elections'
     );
   } catch (error) {
     console.error('USSD handler error:', error);
