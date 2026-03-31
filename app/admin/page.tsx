@@ -47,6 +47,11 @@ interface Incident {
   permitNumber?: string;
   constructionType?: string;
   zone?: string;
+  badgeNumber?: string;
+  stationName?: string;
+  caseReference?: string;
+  wardNumber?: string;
+  municipalTicket?: string;
   timestamp: string;
 }
 
@@ -115,9 +120,12 @@ export default function AdminDashboard() {
   const [assignedTo, setAssignedTo] = useState('');
   const [incidentFilter, setIncidentFilter] = useState<'all' | 'pending' | 'investigating' | 'resolved' | 'dismissed'>('pending');
   const [complianceFilter, setComplianceFilter] = useState<'all' | 'pending' | 'investigating' | 'notice_issued' | 'enforcement_action' | 'resolved' | 'dismissed'>('pending');
+  const [policeFilter, setPoliceFilter] = useState<'all' | 'pending' | 'investigating' | 'referred_to_ipid' | 'resolved' | 'dismissed'>('pending');
+  const [socialFilter, setSocialFilter] = useState<'all' | 'pending' | 'investigating' | 'referred_to_department' | 'resolved' | 'dismissed'>('pending');
+  const [serviceFilter, setServiceFilter] = useState<'all' | 'pending' | 'acknowledged' | 'in_progress' | 'resolved' | 'dismissed'>('pending');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'elections' | 'candidates' | 'create' | 'incidents' | 'compliance'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'elections' | 'candidates' | 'create' | 'incidents' | 'compliance' | 'police' | 'social' | 'service_delivery'>('overview');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newElection, setNewElection] = useState({
     title: '',
@@ -330,6 +338,10 @@ export default function AdminDashboard() {
       case 'dismissed': return 'bg-gray-100 text-gray-600';
       case 'notice_issued': return 'bg-orange-100 text-orange-800';
       case 'enforcement_action': return 'bg-red-100 text-red-800';
+      case 'referred_to_ipid': return 'bg-red-100 text-red-800';
+      case 'referred_to_department': return 'bg-purple-100 text-purple-800';
+      case 'acknowledged': return 'bg-cyan-100 text-cyan-800';
+      case 'in_progress': return 'bg-indigo-100 text-indigo-800';
       default: return 'bg-gray-100 text-gray-600';
     }
   };
@@ -337,6 +349,21 @@ export default function AdminDashboard() {
   const filteredIncidents = incidentFilter === 'all'
     ? incidents
     : incidents.filter(i => i.status === incidentFilter);
+
+  const filteredPolice = (() => {
+    const police = incidents.filter(i => i.reportType === 'police');
+    return policeFilter === 'all' ? police : police.filter(i => i.status === policeFilter);
+  })();
+
+  const filteredSocial = (() => {
+    const social = incidents.filter(i => i.reportType === 'social_services');
+    return socialFilter === 'all' ? social : social.filter(i => i.status === socialFilter);
+  })();
+
+  const filteredService = (() => {
+    const service = incidents.filter(i => i.reportType === 'service_delivery');
+    return serviceFilter === 'all' ? service : service.filter(i => i.status === serviceFilter);
+  })();
 
   const filteredCompliance = (() => {
     const compliance = incidents.filter(i => i.reportType === 'building_compliance');
@@ -418,6 +445,9 @@ export default function AdminDashboard() {
               { id: 'create', label: 'Create Election', icon: '➕' },
               { id: 'incidents', label: 'Incidents', icon: '🚨' },
               { id: 'compliance', label: 'Building Compliance', icon: '🏗️' },
+              { id: 'police', label: 'Police', icon: '🚔' },
+              { id: 'social', label: 'Social Services', icon: '🤝' },
+              { id: 'service_delivery', label: 'Service Delivery', icon: '🏙️' },
             ].map((tab) => (
               <button
                 type="button"
@@ -1073,6 +1103,330 @@ export default function AdminDashboard() {
                             className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors">
                             Close
                           </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Police Tab */}
+          {activeTab === 'police' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Police Misconduct Reports</h2>
+                <p className="text-gray-500 text-sm">
+                  {incidents.filter(i => i.reportType === 'police').length} reports &mdash;{' '}
+                  {incidents.filter(i => i.reportType === 'police' && i.status === 'pending').length} pending
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {(['all', 'pending', 'investigating', 'referred_to_ipid', 'resolved', 'dismissed'] as const).map((filter) => {
+                  const base = incidents.filter(i => i.reportType === 'police');
+                  const count = filter === 'all' ? base.length : base.filter(i => i.status === filter).length;
+                  const label = filter === 'referred_to_ipid' ? 'Referred to IPID' : filter.charAt(0).toUpperCase() + filter.slice(1);
+                  return (
+                    <button key={filter} type="button" onClick={() => setPoliceFilter(filter)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${policeFilter === filter ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                      {label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="space-y-4">
+                {filteredPolice.length === 0 && (
+                  <div className="border border-gray-200 rounded-lg p-8 text-center text-gray-500">No police misconduct reports match the selected filter.</div>
+                )}
+                {filteredPolice.map((incident) => (
+                  <div key={incident.id} className="border border-red-100 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0 mr-4">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{incident.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getSeverityBadgeClass(incident.severity)}`}>{incident.severity}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(incident.status)}`}>
+                            {incident.status === 'referred_to_ipid' ? 'Referred to IPID' : incident.status}
+                          </span>
+                          {incident.verified && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>}
+                        </div>
+                        <div className="text-sm text-gray-500 space-x-3">
+                          <span>Category: <span className="text-gray-700">{incident.category.replace(/_/g, ' ')}</span></span>
+                          <span>Location: <span className="text-gray-700">{incident.location}</span></span>
+                        </div>
+                        {(incident.badgeNumber || incident.stationName) && (
+                          <div className="text-sm text-gray-500 mt-1 space-x-3">
+                            {incident.badgeNumber && <span>Badge: <span className="text-gray-700">{incident.badgeNumber}</span></span>}
+                            {incident.stationName && <span>Station: <span className="text-gray-700">{incident.stationName}</span></span>}
+                          </div>
+                        )}
+                        <div className="text-xs text-gray-400 mt-1">{new Date(incident.timestamp).toLocaleString()}</div>
+                        {incident.ipfsHash && (
+                          <a href={`https://gateway.pinata.cloud/ipfs/${incident.ipfsHash}`} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline font-mono mt-1 block">
+                            IPFS: {incident.ipfsHash.slice(0, 20)}...
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {!incident.verified && incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { verified: true, status: 'investigating' })}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">Verify</button>
+                      )}
+                      {incident.status === 'investigating' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { status: 'referred_to_ipid' })}
+                          className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">Refer to IPID</button>
+                      )}
+                      {incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { status: 'resolved' })}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Resolve</button>
+                      )}
+                      {incident.status !== 'dismissed' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { status: 'dismissed' })}
+                          className="bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500">Dismiss</button>
+                      )}
+                      <button type="button" onClick={() => {
+                        if (selectedIncident?.id === incident.id) { setSelectedIncident(null); setVerificationNotes(''); setAssignedTo(''); }
+                        else { setSelectedIncident(incident); setVerificationNotes(incident.verificationNotes || ''); setAssignedTo(incident.assignedTo || ''); }
+                      }} className="border border-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-50">
+                        {selectedIncident?.id === incident.id ? 'Close' : 'Details'}
+                      </button>
+                    </div>
+                    {selectedIncident?.id === incident.id && (
+                      <div className="mt-4 border-t border-gray-100 pt-4 space-y-4">
+                        <div><h4 className="text-sm font-semibold text-gray-700 mb-1">Full Description</h4><p className="text-gray-600 text-sm whitespace-pre-wrap">{incident.description}</p></div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Verification Notes</label>
+                          <input type="text" value={verificationNotes} onChange={(e) => setVerificationNotes(e.target.value)}
+                            placeholder="Add notes..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Officer</label>
+                          <input type="text" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}
+                            placeholder="Officer name or ID..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => handleUpdateIncident(incident.id, { verificationNotes, assignedTo })}
+                            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700">Save Notes</button>
+                          <button type="button" onClick={() => { setSelectedIncident(null); setVerificationNotes(''); setAssignedTo(''); }}
+                            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Close</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Social Services Tab */}
+          {activeTab === 'social' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Social Services Reports</h2>
+                <p className="text-gray-500 text-sm">
+                  {incidents.filter(i => i.reportType === 'social_services').length} reports &mdash;{' '}
+                  {incidents.filter(i => i.reportType === 'social_services' && i.status === 'pending').length} pending
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {(['all', 'pending', 'investigating', 'referred_to_department', 'resolved', 'dismissed'] as const).map((filter) => {
+                  const base = incidents.filter(i => i.reportType === 'social_services');
+                  const count = filter === 'all' ? base.length : base.filter(i => i.status === filter).length;
+                  const label = filter === 'referred_to_department' ? 'Referred to Dept' : filter.charAt(0).toUpperCase() + filter.slice(1);
+                  return (
+                    <button key={filter} type="button" onClick={() => setSocialFilter(filter)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${socialFilter === filter ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                      {label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="space-y-4">
+                {filteredSocial.length === 0 && (
+                  <div className="border border-gray-200 rounded-lg p-8 text-center text-gray-500">No social services reports match the selected filter.</div>
+                )}
+                {filteredSocial.map((incident) => (
+                  <div key={incident.id} className="border border-purple-100 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0 mr-4">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{incident.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getSeverityBadgeClass(incident.severity)}`}>{incident.severity}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(incident.status)}`}>
+                            {incident.status === 'referred_to_department' ? 'Referred to Dept' : incident.status}
+                          </span>
+                          {incident.verified && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>}
+                        </div>
+                        <div className="text-sm text-gray-500 space-x-3">
+                          <span>Category: <span className="text-gray-700">{incident.category.replace(/_/g, ' ')}</span></span>
+                          <span>Location: <span className="text-gray-700">{incident.location}</span></span>
+                        </div>
+                        {incident.caseReference && (
+                          <div className="text-sm text-gray-500 mt-1">Case Ref: <span className="text-gray-700">{incident.caseReference}</span></div>
+                        )}
+                        <div className="text-xs text-gray-400 mt-1">{new Date(incident.timestamp).toLocaleString()}</div>
+                        {incident.ipfsHash && (
+                          <a href={`https://gateway.pinata.cloud/ipfs/${incident.ipfsHash}`} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline font-mono mt-1 block">
+                            IPFS: {incident.ipfsHash.slice(0, 20)}...
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {!incident.verified && incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { verified: true, status: 'investigating' })}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">Verify</button>
+                      )}
+                      {incident.status === 'investigating' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { status: 'referred_to_department' })}
+                          className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700">Refer to Department</button>
+                      )}
+                      {incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { status: 'resolved' })}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Resolve</button>
+                      )}
+                      {incident.status !== 'dismissed' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { status: 'dismissed' })}
+                          className="bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500">Dismiss</button>
+                      )}
+                      <button type="button" onClick={() => {
+                        if (selectedIncident?.id === incident.id) { setSelectedIncident(null); setVerificationNotes(''); setAssignedTo(''); }
+                        else { setSelectedIncident(incident); setVerificationNotes(incident.verificationNotes || ''); setAssignedTo(incident.assignedTo || ''); }
+                      }} className="border border-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-50">
+                        {selectedIncident?.id === incident.id ? 'Close' : 'Details'}
+                      </button>
+                    </div>
+                    {selectedIncident?.id === incident.id && (
+                      <div className="mt-4 border-t border-gray-100 pt-4 space-y-4">
+                        <div><h4 className="text-sm font-semibold text-gray-700 mb-1">Full Description</h4><p className="text-gray-600 text-sm whitespace-pre-wrap">{incident.description}</p></div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Verification Notes</label>
+                          <input type="text" value={verificationNotes} onChange={(e) => setVerificationNotes(e.target.value)}
+                            placeholder="Add notes..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Officer</label>
+                          <input type="text" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}
+                            placeholder="Officer name or ID..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => handleUpdateIncident(incident.id, { verificationNotes, assignedTo })}
+                            className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700">Save Notes</button>
+                          <button type="button" onClick={() => { setSelectedIncident(null); setVerificationNotes(''); setAssignedTo(''); }}
+                            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Close</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Service Delivery Tab */}
+          {activeTab === 'service_delivery' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Service Delivery Reports</h2>
+                <p className="text-gray-500 text-sm">
+                  {incidents.filter(i => i.reportType === 'service_delivery').length} reports &mdash;{' '}
+                  {incidents.filter(i => i.reportType === 'service_delivery' && i.status === 'pending').length} pending
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {(['all', 'pending', 'acknowledged', 'in_progress', 'resolved', 'dismissed'] as const).map((filter) => {
+                  const base = incidents.filter(i => i.reportType === 'service_delivery');
+                  const count = filter === 'all' ? base.length : base.filter(i => i.status === filter).length;
+                  const label = filter === 'in_progress' ? 'In Progress' : filter.charAt(0).toUpperCase() + filter.slice(1);
+                  return (
+                    <button key={filter} type="button" onClick={() => setServiceFilter(filter)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${serviceFilter === filter ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                      {label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="space-y-4">
+                {filteredService.length === 0 && (
+                  <div className="border border-gray-200 rounded-lg p-8 text-center text-gray-500">No service delivery reports match the selected filter.</div>
+                )}
+                {filteredService.map((incident) => (
+                  <div key={incident.id} className="border border-blue-100 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0 mr-4">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{incident.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getSeverityBadgeClass(incident.severity)}`}>{incident.severity}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(incident.status)}`}>
+                            {incident.status === 'in_progress' ? 'In Progress' : incident.status}
+                          </span>
+                          {incident.verified && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>}
+                        </div>
+                        <div className="text-sm text-gray-500 space-x-3">
+                          <span>Category: <span className="text-gray-700">{incident.category.replace(/_/g, ' ')}</span></span>
+                          <span>Location: <span className="text-gray-700">{incident.location}</span></span>
+                        </div>
+                        {(incident.wardNumber || incident.municipalTicket) && (
+                          <div className="text-sm text-gray-500 mt-1 space-x-3">
+                            {incident.wardNumber && <span>Ward: <span className="text-gray-700">{incident.wardNumber}</span></span>}
+                            {incident.municipalTicket && <span>Ticket: <span className="text-gray-700">{incident.municipalTicket}</span></span>}
+                          </div>
+                        )}
+                        <div className="text-xs text-gray-400 mt-1">{new Date(incident.timestamp).toLocaleString()}</div>
+                        {incident.ipfsHash && (
+                          <a href={`https://gateway.pinata.cloud/ipfs/${incident.ipfsHash}`} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline font-mono mt-1 block">
+                            IPFS: {incident.ipfsHash.slice(0, 20)}...
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {!incident.verified && incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { verified: true, status: 'acknowledged' })}
+                          className="bg-cyan-600 text-white px-3 py-1 rounded text-sm hover:bg-cyan-700">Acknowledge</button>
+                      )}
+                      {incident.status === 'acknowledged' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { status: 'in_progress' })}
+                          className="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700">Mark In Progress</button>
+                      )}
+                      {incident.status !== 'resolved' && incident.status !== 'dismissed' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { status: 'resolved' })}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Resolve</button>
+                      )}
+                      {incident.status !== 'dismissed' && (
+                        <button type="button" onClick={() => handleUpdateIncident(incident.id, { status: 'dismissed' })}
+                          className="bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500">Dismiss</button>
+                      )}
+                      <button type="button" onClick={() => {
+                        if (selectedIncident?.id === incident.id) { setSelectedIncident(null); setVerificationNotes(''); setAssignedTo(''); }
+                        else { setSelectedIncident(incident); setVerificationNotes(incident.verificationNotes || ''); setAssignedTo(incident.assignedTo || ''); }
+                      }} className="border border-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-50">
+                        {selectedIncident?.id === incident.id ? 'Close' : 'Details'}
+                      </button>
+                    </div>
+                    {selectedIncident?.id === incident.id && (
+                      <div className="mt-4 border-t border-gray-100 pt-4 space-y-4">
+                        <div><h4 className="text-sm font-semibold text-gray-700 mb-1">Full Description</h4><p className="text-gray-600 text-sm whitespace-pre-wrap">{incident.description}</p></div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Verification Notes</label>
+                          <input type="text" value={verificationNotes} onChange={(e) => setVerificationNotes(e.target.value)}
+                            placeholder="Add notes..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Officer</label>
+                          <input type="text" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}
+                            placeholder="Officer name or ID..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => handleUpdateIncident(incident.id, { verificationNotes, assignedTo })}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">Save Notes</button>
+                          <button type="button" onClick={() => { setSelectedIncident(null); setVerificationNotes(''); setAssignedTo(''); }}
+                            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Close</button>
                         </div>
                       </div>
                     )}
