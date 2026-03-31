@@ -59,6 +59,11 @@ model Incident {
   assignedTo        String?
   ipfsHash          String?
   attachments       String[]
+  reportType        String   @default("election")
+  erfNumber         String?
+  permitNumber      String?
+  constructionType  String?
+  zone              String?
   timestamp         DateTime @default(now())
   lastUpdated       DateTime @updatedAt
 }
